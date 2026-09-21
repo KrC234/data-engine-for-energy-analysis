@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "descripcion": "Reglas para la generación de las de carga",
+  "categorias": {
+    "Residencial": {
+      "curva_base": [
+        {"centro": 7.0, "ancho": 1.5, "base": 0.2, "amplitud": 0.5},
+        {"centro": 20.0, "ancho": 2.0, "base": 0.0, "amplitud": 1.8}
+      ],
+      "modificadores_dia": {
+        "Habil": {"factor_amplitud": 1.0, "desplazamiento_pico_h": 0},
+        "Inhabil": {"factor_amplitud": 0.85, "desplazamiento_pico_h": 2},
+        "Festivo": {"factor_amplitud": 0.75, "desplazamiento_pico_h": 3}
+      }
+    },
+    "Comercial": {
+      "curva_base": [
+        {"centro": 14.0, "ancho": 4.0, "base": 0.1, "amplitud": 2.0}
+      ],
+      "modificadores_dia": {
+        "Habil": {"factor_amplitud": 1.0, "desplazamiento_pico_h": 0},
+        "Inhabil": {"factor_amplitud": 0.60, "desplazamiento_pico_h": 0},
+        "Festivo": {"factor_amplitud": 0.20, "desplazamiento_pico_h": 0}
+      }
+    },
+    "Público": {
+      "curva_base": [
+        {"centro": 12.5, "ancho": 2.0, "base": 0.05, "amplitud": 2.2}
+      ],
+      "modificadores_dia": {
+        "Habil": {"factor_amplitud": 1.0, "desplazamiento_pico_h": 0},
+        "Inhabil": {"factor_amplitud": 0.10, "desplazamiento_pico_h": 0},
+        "Festivo": {"factor_amplitud": 0.05, "desplazamiento_pico_h": 0}
+      }
+    },
+    "Alumbrado": {
+      "curva_base": [
+        {"centro": 0.0, "ancho": 3.0, "base": 0.05, "amplitud": 1.8},
+        {"centro": 24.0, "ancho": 3.0, "base": 0.0, "amplitud": 1.8}
+      ],
+      "modificadores_dia": {
+        "Habil": {"factor_amplitud": 1.0, "desplazamiento_pico_h": 0},
+        "Inhabil": {"factor_amplitud": 1.0, "desplazamiento_pico_h": 0},
+        "Festivo": {"factor_amplitud": 1.0, "desplazamiento_pico_h": 0}
+      }
+    }
+  }
+}

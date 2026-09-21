@@ -92,3 +92,14 @@ El modelado de la base de datos propone las siguientes tablas, estás se encuent
 
 > Para más información consultar documento del modelado de base de datos. 
 
+# Generación de Datos
+
+Para la sintesis de datos se solicita que puedan ser escenarios recreables mediante el uso de semillas.
+
+Para elaborar la propuesta se consideran las siguientes consideraciones del análisis de caso. 
+
++ Generar registros estaticos: Cómo el escenario es una ciudad, cuestiones como los dispositivos, servicios contratados, distribución entre las zonas, etc, son datos que conllevan mantenerse de manera estatica, estos no pueden cambiar entre una corrida y otra dado que estamos hablando del mismo punto geográfico. Por lo que es necesario establecer un conjunto de reglas para poder automatizar el proceso de automatización del escenario. 
+
++ Generación de datos sinteticos: Una vez que se tenga definido los datos estaticos (no variables), se propone que el conjunto de reglas defina la propabilidad de los tipos de eventos (anomalías), y que la semilla desde la base defina que dispositivos y cuando ocurririan la seri de eventos, las lecturas generadas tomaran las variables necesarias y en conjunto con el perfil de carga, que define el comportamiento general de cada tipo de servicio, se lograra simular el escenario de manera controlada. 
+
+
