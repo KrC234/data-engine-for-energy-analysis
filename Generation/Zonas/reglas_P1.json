@@ -1,0 +1,51 @@
+{
+  "persona": "P1",
+  "responsable": "NOMBRE_PENDIENTE",
+  "zonas_asignadas": [1, 7, 13, 19],
+  "rol_secundario": "Lider de integracion y corrida maestra",
+  "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",
+  "zonas": [
+    {
+      "id_zona": 1,
+      "nombre": "Atzinquilpa",
+      "tipo_urbano": "CENTRO",
+      "superficie_km2": 2.140,
+      "factor_socioeconomico": 1.180,
+      "n_servicios_previstos": 0,
+      "notas": "Zona ancla de la propuesta. Mezcla tipo de servicios del centro."
+    },
+    {
+      "id_zona": 7,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre segun RD-06 y definir caracter urbano distinto al de la zona 1."
+    },
+    {
+      "id_zona": 13,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre y definir caracter distinto al de las zonas 1 y 7."
+    },
+    {
+      "id_zona": 19,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre y definir caracter distinto al de las zonas 1, 7 y 13."
+    }
+  ],
+  "mejoras_reglas_propuestas": {
+    "curva_base": {},
+    "modificadores_dia": {},
+    "tasas_anomalia": {},
+    "calidad_comunicacion": {}
+  }
+}

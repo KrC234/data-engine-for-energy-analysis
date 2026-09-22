@@ -1,0 +1,51 @@
+{
+  "persona": "P2",
+  "responsable": "NOMBRE_PENDIENTE",
+  "zonas_asignadas": [2, 8, 14, 20],
+  "rol_secundario": "Perfiles de carga y calendario (1296 perfiles, 90 dias)",
+  "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",
+  "zonas": [
+    {
+      "id_zona": 2,
+      "nombre": "San Andrés Mizquetenco",
+      "tipo_urbano": "RESIDENCIAL_MEDIA",
+      "superficie_km2": 3.480,
+      "factor_socioeconomico": 1.040,
+      "n_servicios_previstos": 0,
+      "notas": "Zona ancla de la propuesta."
+    },
+    {
+      "id_zona": 8,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre segun RD-06 y definir caracter urbano distinto al de la zona 2."
+    },
+    {
+      "id_zona": 14,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre y definir caracter distinto al de las zonas 2 y 8."
+    },
+    {
+      "id_zona": 20,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre y definir caracter distinto al de las zonas 2, 8 y 14."
+    }
+  ],
+  "mejoras_reglas_propuestas": {
+    "curva_base": {},
+    "modificadores_dia": {},
+    "tasas_anomalia": {},
+    "calidad_comunicacion": {}
+  }
+}

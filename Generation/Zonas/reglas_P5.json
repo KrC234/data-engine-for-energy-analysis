@@ -1,0 +1,51 @@
+{
+  "persona": "P5",
+  "responsable": "NOMBRE_PENDIENTE",
+  "zonas_asignadas": [5, 11, 17, 23],
+  "rol_secundario": "Validacion de integridad: conteos, claves y energias no negativas",
+  "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",
+  "zonas": [
+    {
+      "id_zona": 5,
+      "nombre": "Colonia Nexpahuacán Norte",
+      "tipo_urbano": "MIXTA",
+      "superficie_km2": 2.950,
+      "factor_socioeconomico": 0.960,
+      "n_servicios_previstos": 0,
+      "notas": "Zona ancla de la propuesta. Mezcla residencial y comercio."
+    },
+    {
+      "id_zona": 11,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre segun RD-06 y definir caracter urbano distinto al de la zona 5."
+    },
+    {
+      "id_zona": 17,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre y definir caracter distinto al de las zonas 5 y 11."
+    },
+    {
+      "id_zona": 23,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre y definir caracter distinto al de las zonas 5, 11 y 17."
+    }
+  ],
+  "mejoras_reglas_propuestas": {
+    "curva_base": {},
+    "modificadores_dia": {},
+    "tasas_anomalia": {},
+    "calidad_comunicacion": {}
+  }
+}

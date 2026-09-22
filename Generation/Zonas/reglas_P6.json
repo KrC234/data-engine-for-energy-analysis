@@ -1,0 +1,51 @@
+{
+  "persona": "P6",
+  "responsable": "NOMBRE_PENDIENTE",
+  "zonas_asignadas": [6, 12, 18, 24],
+  "rol_secundario": "Reproducibilidad y documentacion: diff de corridas y guia de reproduccion",
+  "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",
+  "zonas": [
+    {
+      "id_zona": 6,
+      "nombre": "Xaltemoyan Poniente",
+      "tipo_urbano": "PERIFERIA",
+      "superficie_km2": 6.740,
+      "factor_socioeconomico": 0.710,
+      "n_servicios_previstos": 0,
+      "notas": "Zona ancla de la propuesta. Zona extensa y de bajo consumo por servicio."
+    },
+    {
+      "id_zona": 12,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre segun RD-06 y definir caracter urbano distinto al de la zona 6."
+    },
+    {
+      "id_zona": 18,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre y definir caracter distinto al de las zonas 6 y 12."
+    },
+    {
+      "id_zona": 24,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre y definir caracter distinto al de las zonas 6, 12 y 18."
+    }
+  ],
+  "mejoras_reglas_propuestas": {
+    "curva_base": {},
+    "modificadores_dia": {},
+    "tasas_anomalia": {},
+    "calidad_comunicacion": {}
+  }
+}

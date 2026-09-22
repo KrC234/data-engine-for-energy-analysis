@@ -1,0 +1,51 @@
+{
+  "persona": "P3",
+  "responsable": "NOMBRE_PENDIENTE",
+  "zonas_asignadas": [3, 9, 15, 21],
+  "rol_secundario": "Reglas maestras y anomalias: maestro de Rules.json y sorteo de eventos",
+  "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",
+  "zonas": [
+    {
+      "id_zona": 3,
+      "nombre": "Barrio de Coyoltzinco",
+      "tipo_urbano": "POPULAR",
+      "superficie_km2": 1.860,
+      "factor_socioeconomico": 0.790,
+      "n_servicios_previstos": 0,
+      "notas": "Zona ancla de la propuesta. Zona densa: mas servicios por km2."
+    },
+    {
+      "id_zona": 9,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre segun RD-06 y definir caracter urbano distinto al de la zona 3."
+    },
+    {
+      "id_zona": 15,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre y definir caracter distinto al de las zonas 3 y 9."
+    },
+    {
+      "id_zona": 21,
+      "nombre": "",
+      "tipo_urbano": "PENDIENTE",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 0,
+      "n_servicios_previstos": 0,
+      "notas": "Componer nombre y definir caracter distinto al de las zonas 3, 9 y 15."
+    }
+  ],
+  "mejoras_reglas_propuestas": {
+    "curva_base": {},
+    "modificadores_dia": {},
+    "tasas_anomalia": {},
+    "calidad_comunicacion": {}
+  }
+}
