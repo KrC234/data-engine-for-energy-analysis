@@ -4,6 +4,7 @@
   "zonas_asignadas": [1, 7, 13, 19],
   "rol_secundario": "Lider de integracion y corrida maestra",
   "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",
+  "metodo_semilla_zona": "sha256(f'{semilla_raiz}-z{id_zona}').hexdigest()[:8] interpretado como entero base16 (32 bits). Debe recalcularse cuando el lider defina la semilla_raiz real de la corrida maestra; el valor mostrado aqui es solo de referencia con la semilla PENDIENTE.",
   "zonas": [
     {
       "id_zona": 1,
@@ -11,41 +12,209 @@
       "tipo_urbano": "CENTRO",
       "superficie_km2": 2.140,
       "factor_socioeconomico": 1.180,
-      "n_servicios_previstos": 0,
-      "notas": "Zona ancla de la propuesta. Mezcla tipo de servicios del centro."
+      "densidad_servicios_por_km2": 129.91,
+      "n_servicios_previstos": 278,
+      "semilla_zona": 431121654,
+      "semilla_zona_hex": "19b264f6",
+      "mezcla_servicios": {
+        "VIV_DEPTO": 118,
+        "VIV_RES": 35,
+        "COM_PEQ": 55,
+        "MERCADO": 28,
+        "EDU_ESC": 8,
+        "SAL_CLI": 6,
+        "GOB_ADM": 14,
+        "ALUM_VIA": 10,
+        "INFR_BOM": 4
+      },
+      "notas": "Zona ancla de la propuesta. Mezcla tipo de servicios del centro: comercio y oficinas de gobierno concentrados, vivienda predominantemente en departamentos densos (se excluyen VIV_SOCIAL y VIV_UNIF por incompatibles con la densidad del centro historico)."
     },
     {
       "id_zona": 7,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre segun RD-06 y definir caracter urbano distinto al de la zona 1."
+      "nombre": "Barrio de Xiloxochitlan",
+      "tipo_urbano": "POPULAR",
+      "superficie_km2": 1.720,
+      "factor_socioeconomico": 0.760,
+      "densidad_servicios_por_km2": 150.00,
+      "n_servicios_previstos": 258,
+      "semilla_zona": 3395951374,
+      "semilla_zona_hex": "ca6a1b0e",
+      "mezcla_servicios": {
+        "VIV_UNIF": 150,
+        "VIV_DEPTO": 64,
+        "COM_PEQ": 20,
+        "MERCADO": 6,
+        "EDU_ESC": 5,
+        "SAL_CLI": 4,
+        "GOB_ADM": 4,
+        "ALUM_VIA": 3,
+        "INFR_BOM": 2
+      },
+      "notas": "Barrio popular muy denso y homogeneo, dominado por vivienda unifamiliar autoconstruida y comercio de barrio. Se excluye VIV_SOCIAL segun Services_Rules.json (la vivienda social se modela en otras zonas del municipio)."
     },
     {
       "id_zona": 13,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 1 y 7."
+      "nombre": "Fracc. Residencial Cuauhtenco",
+      "tipo_urbano": "RESIDENCIAL_ALTA",
+      "superficie_km2": 3.850,
+      "factor_socioeconomico": 1.780,
+      "densidad_servicios_por_km2": 40.00,
+      "n_servicios_previstos": 154,
+      "semilla_zona": 3970226670,
+      "semilla_zona_hex": "eca4d9ee",
+      "mezcla_servicios": {
+        "VIV_RES": 95,
+        "VIV_DEPTO": 36,
+        "COM_PEQ": 8,
+        "EDU_ESC": 2,
+        "SAL_CLI": 3,
+        "GOB_ADM": 3,
+        "ALUM_VIA": 5,
+        "INFR_BOM": 2
+      },
+      "notas": "Fraccionamiento cerrado en las faldas del valle, baja densidad y consumo por servicio alto. Excluye VIV_SOCIAL, VIV_UNIF y MERCADO segun Services_Rules.json."
     },
     {
       "id_zona": 19,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 1, 7 y 13."
+      "nombre": "Nexcoyotlan Oriente",
+      "tipo_urbano": "PERIFERIA",
+      "superficie_km2": 7.230,
+      "factor_socioeconomico": 0.640,
+      "densidad_servicios_por_km2": 19.78,
+      "n_servicios_previstos": 143,
+      "semilla_zona": 4256263824,
+      "semilla_zona_hex": "fdb16e90",
+      "mezcla_servicios": {
+        "VIV_UNIF": 40,
+        "VIV_SOCIAL": 15,
+        "VIV_DEPTO": 9,
+        "COM_PEQ": 38,
+        "MERCADO": 12,
+        "EDU_ESC": 5,
+        "SAL_CLI": 5,
+        "GOB_ADM": 5,
+        "ALUM_VIA": 8,
+        "INFR_BOM": 6
+      },
+      "notas": "Periferia extensa rumbo a los cerros, baja densidad, mezcla mas comercial de lo habitual por corredores de paso y comercio informal a pie de carretera; incluye vivienda social."
     }
   ],
   "mejoras_reglas_propuestas": {
-    "curva_base": {},
-    "modificadores_dia": {},
-    "tasas_anomalia": {},
-    "calidad_comunicacion": {}
+    "curva_base": {
+      "residencial_general": {
+        "descripcion": "Ajuste climatico para las 4 zonas de P1 (clima templado-frio del Valle de Toluca): se incrementa levemente la amplitud del bulto matutino y nocturno por uso de calefaccion electrica en madrugada/noche, y se sube ligeramente la base (consumo minimo que nunca baja a cero por refrigeradores y stand-by con clima frio).",
+        "bulto_manana": {"centro": 7.0, "ancho": 1.5, "base": 0.25, "amplitud": 0.60},
+        "bulto_noche": {"centro": 20.0, "ancho": 2.0, "base": 0.05, "amplitud": 2.00}
+      },
+      "residencial_zona_1_centro": {
+        "descripcion": "Departamentos densos del centro: bulto nocturno un poco mas temprano y estrecho (horarios de oficina mas homogeneos).",
+        "bulto_noche": {"centro": 19.5, "ancho": 1.7, "base": 0.05, "amplitud": 1.85}
+      },
+      "residencial_zona_7_popular": {
+        "descripcion": "Vivienda popular: pico nocturno mas marcado y estrecho, jornadas laborales sincronizadas.",
+        "bulto_noche": {"centro": 20.0, "ancho": 1.8, "base": 0.05, "amplitud": 2.10}
+      },
+      "residencial_zona_13_residencial_alta": {
+        "descripcion": "Vivienda de mayor superficie y equipamiento (calefaccion, electrodomesticos, posible carga vehicular): amplitud mayor y bulto mas ancho.",
+        "bulto_noche": {"centro": 20.5, "ancho": 2.3, "base": 0.10, "amplitud": 2.40}
+      },
+      "residencial_zona_19_periferia": {
+        "descripcion": "Periferia: base mas plana durante el dia por actividad domestica dispersa/informal y bulto nocturno mas ancho por horarios de traslado heterogeneos; amplitud algo menor por menor poder adquisitivo de electrodomesticos.",
+        "bulto_noche": {"centro": 20.5, "ancho": 2.5, "base": 0.30, "amplitud": 1.50}
+      },
+      "comercial_zona_1_centro": {
+        "descripcion": "Comercio y oficinas del centro historico abren mas temprano que el promedio municipal (mercado matinal, tramites de gobierno); se adelanta el centro de la curva y se sube la amplitud.",
+        "curva": {"centro": 12.5, "ancho": 3.5, "base": 0.15, "amplitud": 2.30}
+      },
+      "comercial_zona_7_popular": {
+        "descripcion": "Comercio de barrio con doble pico (mercado matutino + tianguis/tarde), se mantiene la curva maestra sin cambios mayores por ser ya representativa de un patron mixto.",
+        "curva": {"centro": 14.0, "ancho": 4.0, "base": 0.10, "amplitud": 2.00}
+      },
+      "comercial_zona_19_periferia": {
+        "descripcion": "Comercio de paso/carretera con actividad mas extendida y menos pico definido.",
+        "curva": {"centro": 13.5, "ancho": 5.0, "base": 0.15, "amplitud": 1.60}
+      },
+      "publico_zona_1_centro": {
+        "descripcion": "Mayor concentracion de oficinas de gobierno y escuelas en el centro; se sube levemente la amplitud del pico institucional matutino-vespertino sin romper su forma.",
+        "curva": {"centro": 12.5, "ancho": 2.0, "base": 0.05, "amplitud": 2.40}
+      },
+      "alumbrado_todas_zonas": {
+        "descripcion": "Sin modificacion respecto al maestro (fisiologicamente solo debe activarse sin sol); se conserva (0.0,3.0,0.05,1.8) y (24.0,3.0,0.0,1.8) para las 4 zonas."
+      }
+    },
+    "modificadores_dia": {
+      "zona_1_centro_comercial": {"Habil": {"factor": 1.00, "desfase_horas": 0}, "Inhabil": {"factor": 0.55, "desfase_horas": 0}, "Festivo": {"factor": 0.15, "desfase_horas": 0}, "justificacion": "El comercio y gobierno del centro cierra casi por completo en festivo, mas que el promedio maestro (0.20)."},
+      "zona_7_popular_residencial": {"Habil": {"factor": 1.00, "desfase_horas": 0}, "Inhabil": {"factor": 0.95, "desfase_horas": 1}, "Festivo": {"factor": 0.85, "desfase_horas": 2}, "justificacion": "En zonas populares la gente permanece mas tiempo en casa en dia inhabil/festivo (menor movilidad recreativa), por lo que el consumo residencial baja menos que el promedio maestro."},
+      "zona_19_periferia_comercial": {"Habil": {"factor": 1.00, "desfase_horas": 0}, "Inhabil": {"factor": 0.80, "desfase_horas": 1}, "Festivo": {"factor": 0.55, "desfase_horas": 1}, "justificacion": "El comercio informal de paso en periferia opera casi todos los dias, con menor caida en inhabil/festivo que el comercio formal del centro."}
+    },
+    "tasas_anomalia": {
+      "descripcion_metodologia": "Tasa base municipal = 16800 eventos / (5000 servicios x 90 dias) = 0.037333 eventos/servicio/dia. Se reparte en 7 tipos con pesos base y se ajusta por caracter de zona con multiplicadores causales; los resultados se renormalizan para que cada zona sume su propio total esperado.",
+      "pesos_base_por_tipo": {
+        "pico_demanda": 0.18,
+        "consumo_anomalo_sostenido": 0.12,
+        "manipulacion_medidor": 0.10,
+        "falla_medidor": 0.15,
+        "perdida_comunicacion": 0.15,
+        "sobrecarga": 0.15,
+        "mantenimiento_programado": 0.15
+      },
+      "multiplicadores_por_caracter": {
+        "CENTRO": {"sobrecarga": 1.40, "pico_demanda": 1.10},
+        "POPULAR": {"manipulacion_medidor": 1.60, "consumo_anomalo_sostenido": 1.30},
+        "RESIDENCIAL_ALTA": {"pico_demanda": 1.50},
+        "PERIFERIA": {"perdida_comunicacion": 1.60, "falla_medidor": 1.50}
+      },
+      "factor_propension_zona": {
+        "zona_1_centro": 1.00,
+        "zona_7_popular": 1.05,
+        "zona_13_residencial_alta": 0.90,
+        "zona_19_periferia": 1.10,
+        "justificacion": "Popular y periferia tienen ligeramente mas incidentes totales por infraestructura mas antigua/expuesta; residencial alta tiene menos incidentes en general pese a picos de demanda mayores; centro se toma como base 1.00."
+      },
+      "eventos_esperados_90d": {
+        "zona_1_centro": {"pico_demanda": 171, "consumo_anomalo_sostenido": 104, "manipulacion_medidor": 87, "falla_medidor": 130, "perdida_comunicacion": 130, "sobrecarga": 182, "mantenimiento_programado": 129, "total": 933},
+        "zona_7_popular": {"pico_demanda": 149, "consumo_anomalo_sostenido": 129, "manipulacion_medidor": 133, "falla_medidor": 124, "perdida_comunicacion": 124, "sobrecarga": 124, "mantenimiento_programado": 126, "total": 909},
+        "zona_13_residencial_alta": {"pico_demanda": 115, "consumo_anomalo_sostenido": 51, "manipulacion_medidor": 43, "falla_medidor": 64, "perdida_comunicacion": 64, "sobrecarga": 64, "mantenimiento_programado": 64, "total": 465},
+        "zona_19_periferia": {"pico_demanda": 82, "consumo_anomalo_sostenido": 54, "manipulacion_medidor": 45, "falla_medidor": 102, "perdida_comunicacion": 109, "sobrecarga": 68, "mantenimiento_programado": 68, "total": 528},
+        "total_bloque_P1": 2835
+      },
+      "tasas_por_tipo_eventos_servicio_dia_bloque": {
+        "pico_demanda": 0.00689,
+        "consumo_anomalo_sostenido": 0.00451,
+        "manipulacion_medidor": 0.00411,
+        "falla_medidor": 0.00560,
+        "perdida_comunicacion": 0.00570,
+        "sobrecarga": 0.00584,
+        "mantenimiento_programado": 0.00516,
+        "suma": 0.03781
+      }
+    },
+    "calidad_comunicacion": {
+      "marcas_medidor": [
+        {"marca": "ElectroLira Serie X", "gama": "premium", "tasa_exito_comunicacion": 0.995, "tasa_falla_intrinseca_90d": 0.010},
+        {"marca": "TezcoMed Pro", "gama": "media-alta", "tasa_exito_comunicacion": 0.990, "tasa_falla_intrinseca_90d": 0.015},
+        {"marca": "Kuautli Smart", "gama": "media", "tasa_exito_comunicacion": 0.975, "tasa_falla_intrinseca_90d": 0.030},
+        {"marca": "VoltNahui Lite", "gama": "economica", "tasa_exito_comunicacion": 0.955, "tasa_falla_intrinseca_90d": 0.055}
+      ],
+      "proporcion_instalacion_por_zona": {
+        "zona_1_centro": {"ElectroLira Serie X": 0.45, "TezcoMed Pro": 0.35, "Kuautli Smart": 0.15, "VoltNahui Lite": 0.05},
+        "zona_7_popular": {"ElectroLira Serie X": 0.15, "TezcoMed Pro": 0.20, "Kuautli Smart": 0.35, "VoltNahui Lite": 0.30},
+        "zona_13_residencial_alta": {"ElectroLira Serie X": 0.60, "TezcoMed Pro": 0.30, "Kuautli Smart": 0.10, "VoltNahui Lite": 0.00},
+        "zona_19_periferia": {"ElectroLira Serie X": 0.10, "TezcoMed Pro": 0.15, "Kuautli Smart": 0.30, "VoltNahui Lite": 0.45}
+      },
+      "medidores_bloque": {
+        "servicios_p1": 833,
+        "medidores_activos_estimados": 833,
+        "reemplazos_estimados_90d": 43,
+        "medidores_totales_estimados": 876,
+        "metodologia": "5260/5000 = 1.052 medidores por servicio a nivel municipio (260 reemplazos / 5000 servicios). Para P1: 833 x 0.052 = 43.3 -> 43 reemplazos; total 833 + 43 = 876. Los reemplazos se concentran mas en zonas con mayor proporcion de marcas economicas/medias (zona_7 y zona_19)."
+      },
+      "alertas_bloque": {
+        "metodologia": "Ratio municipal alertas/eventos = 12900/16800 = 0.7679. Aplicado al total de eventos del bloque (2835): 2835 x 0.7679 = 2177.6 -> ~2178 alertas esperadas para P1, incluyendo omisiones (eventos reales sin alerta emitida, mas frecuentes en zonas con marcas de menor tasa de exito de comunicacion) y falsas alarmas (alertas sin evento real subyacente, mas frecuentes en zonas con medidores de gama economica).",
+        "alertas_esperadas_p1": 2178,
+        "omisiones_estimadas_pct": 0.10,
+        "falsas_alarmas_estimadas_pct": 0.15
+      }
+    }
   }
 }
