@@ -141,6 +141,27 @@ Criterios de aceptación medibles:
 
 La etapa de perfiles está implementada y en fase de pruebas. Siguen, en orden: catálogos y parámetros temporales, padrón, sorteo de anomalías, lecturas por lotes con reanudación, vigilancia, facturación, validación integral y el BI sobre el datamart.
 
+## Asignación de tareas y estado del equipo
+
+División de la generación entre 6 personas, 4 zonas por persona (24 zonas de Nexpahuacán).
+La matriz completa con cuotas, semillas y cronograma vive en `Assignment/ASIGNACION_24_ZONAS.md`;
+las plantillas de reglas, en `Generation/Zonas/reglas_Pn.json`. Cada integrante compone además
+los nombres de sus 3 zonas sin ancla (regla RD-06: nada de "Zona 7" ni fuentes reales).
+
+| Integrante | Rol | Tareas asignadas | Estado | Rama de trabajo |
+|---|---|---|---|---|
+| Mateo Jiménez Pérez | Lead base de datos, líder de integración | Corrida maestra, unión de los 6 bloques, semilla raíz, versionado. Zonas 1, 7, 13, 19 | Pendiente | feat/division-zonas-6-personas |
+| David Nieto Ayala | Performance y perfiles | Perfiles de carga (1.296), calendario de 90 días. Zonas 2, 8, 14, 20 | En revisión | feat/division-zonas-6-personas |
+| Isabela Mosquera Fernández | Reglas y anomalías | Maestro de Rules.json, sorteo de eventos, tasas. Zonas 3, 9, 15, 21 | En progreso | feat/division-zonas-6-personas |
+| Aalan Kalid Ruiz Colin | Persistencia | Esquema de 13 tablas, inserción por lotes, checkpoints. Zonas 4, 10, 16, 22 | Pendiente | feat/division-zonas-6-personas |
+| Sergio Martínez Blas | Validación de integridad | Conteos por tabla, claves, energías no negativas. Zonas 5, 11, 17, 23 | Pendiente | feat/division-zonas-6-personas |
+| Ramiro Vega Meza | Reproducibilidad y documentación | Diff entre corridas, guía de reproducción. Zonas 6, 12, 18, 24 | Pendiente | feat/division-zonas-6-personas |
+
+Estados: Pendiente, En progreso, En revisión, Completado. Los estados reflejan el avance real
+del repositorio: la etapa de perfiles (David) está implementada y en pruebas; Rules.json tiene
+la versión base 1.0.0 (Isabela la amplía); el resto de etapas aún no arranca. La generación se
+trabaja en ramas por tarea y se integra a main por Pull Request, como manda la política del equipo.
+
 ## Reglas de trabajo
 
 - Commits pequeños y descriptivos.
