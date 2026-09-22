@@ -1,0 +1,56 @@
+{
+    "padron_global":{
+        "residencial":0.80,
+        "comercial":0.10,
+        "Servicio público":0.05,
+        "Alumbrado":0.05
+    }, 
+    "caracter_zona":{
+        "Centro":{
+            
+        },
+        "Residencial Alto":{
+            "Pesos":{
+                "Residencial": 0.85,
+                "Comercial": 0.05,
+                "Público": 0.05,
+                "Alumbrado": 0.05
+            },
+            "excluidos": ["VIV_SOCIAL", "VIV_UNIF", "MERCADO"]
+        },
+        "Residencial Medio":{
+            "Pesos":{
+                "Residencial": 0.85,
+                "Comercial": 0.05,
+                "Público": 0.05,
+                "Alumbrado": 0.05
+            },
+            "excluidos": ["VIV_SOCIAL"]
+        }, 
+        "Popular":{
+            "Pesos":{
+                "Residencial": 0.83,
+                "Comercial": 0.10,
+                "Público": 0.05,
+                "Alumbrado": 0.02
+            },
+            "excluidos": ["VIV_SOCIAL"]
+        },
+        "Mixta":{
+            "pesos_categoria": {
+                "Residencial": 0.40,
+                "Comercial": 0.30,
+                "Público": 0.20,
+                "Alumbrado": 0.10
+            }
+        },
+        "Periférica":{
+            "pesos_categoria": {
+                "Residencial": 0.45,
+                "Comercial": 0.35,
+                "Público": 0.10,
+                "Alumbrado": 0.10
+            }
+        }    
+    }
+}

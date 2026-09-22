@@ -64,7 +64,7 @@ def generacion():
             # Generar los registros individuales para la BD
             for hora in range(24):
                 registros.append({
-                    "ID": servicio["id"],
+                    "ID": servicio["id_servicio"],
                     "Tipo de día": tipo_dia,
                     "Hora": int(hora),
                     "Factor": float(curva_normalizada[hora])
