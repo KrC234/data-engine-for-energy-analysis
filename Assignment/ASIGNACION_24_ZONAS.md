@@ -33,12 +33,12 @@ cuando el señor los entregue.
 
 | Persona | Zonas (id) | Zona ancla existente | Carácter del ancla | Cuota servicios | Cuota lecturas | Rol secundario |
 |---|---|---|---|---|---|---|
-| P1 | 1, 7, 13, 19 | Atzinquilpa | CENTRO | unos 833 | unos 1,800,000 | Líder de integración: une los 6 bloques y corre la corrida maestra |
-| P2 | 2, 8, 14, 20 | San Andrés Mizquetenco | RESIDENCIAL_MEDIA | unos 833 | unos 1,800,000 | Perfiles de carga y calendario (1.296 perfiles, 90 días) |
-| P3 | 3, 9, 15, 21 | Barrio de Coyoltzinco | POPULAR | unos 833 | unos 1,800,000 | Reglas maestras y anomalías: maestro de Rules.json, sorteo de eventos |
-| P4 | 4, 10, 16, 22 | Fracc. Villas de Ocoyotenco | RESIDENCIAL_ALTA | unos 833 | unos 1,800,000 | Persistencia: esquema de 13 tablas, inserción por lotes, checkpoints |
-| P5 | 5, 11, 17, 23 | Colonia Nexpahuacán Norte | MIXTA | unos 833 | unos 1,800,000 | Validación de integridad: conteos, claves, energías no negativas |
-| P6 | 6, 12, 18, 24 | Xaltemoyan Poniente | PERIFERIA | unos 833 | unos 1,800,000 | Reproducibilidad y documentación: diff de corridas, guía |
+| P1, Mateo Jiménez Pérez | 1, 7, 13, 19 | Atzinquilpa | CENTRO | unos 833 | unos 1,800,000 | Líder de integración: une los 6 bloques y corre la corrida maestra |
+| P2, David Nieto Ayala | 2, 8, 14, 20 | San Andrés Mizquetenco | RESIDENCIAL_MEDIA | unos 833 | unos 1,800,000 | Perfiles de carga y calendario (1.296 perfiles, 90 días) |
+| P3, Isabela Mosquera Fernández | 3, 9, 15, 21 | Barrio de Coyoltzinco | POPULAR | unos 833 | unos 1,800,000 | Reglas maestras y anomalías: maestro de Rules.json, sorteo de eventos |
+| P4, Aalan Kalid Ruiz Colin | 4, 10, 16, 22 | Fracc. Villas de Ocoyotenco | RESIDENCIAL_ALTA | unos 833 | unos 1,800,000 | Persistencia: esquema de 13 tablas, inserción por lotes, checkpoints |
+| P5, Sergio Martínez Blas | 5, 11, 17, 23 | Colonia Nexpahuacán Norte | MIXTA | unos 833 | unos 1,800,000 | Validación de integridad: conteos, claves, energías no negativas |
+| P6, Ramiro Vega Meza | 6, 12, 18, 24 | Xaltemoyan Poniente | PERIFERIA | unos 833 | unos 1,800,000 | Reproducibilidad y documentación: diff de corridas, guía |
 
 Las cuotas son orientativas. El reparto fino de los 5.000 servicios entre las 24 zonas
 depende de la superficie y del carácter de cada zona (una zona popular es más densa que una
@@ -123,6 +123,7 @@ Alineado al Plan de Desarrollo del 21 de septiembre al 28 de noviembre de 2026.
 
 ## 8. Pendientes
 
-- Nombres reales de las 6 personas.
-- Composicion de las 18 zonas sin nombre (3 por persona).
+- Composición de las 18 zonas sin nombre (3 por persona).
 - Revisión y visto bueno del señor sobre esta asignación.
+- Decidir la herramienta de gestión de tickets: Trello (en uso) o Jira, y aplicar la
+  política de ramas del equipo (una rama por ticket, main protegida) a este repositorio.

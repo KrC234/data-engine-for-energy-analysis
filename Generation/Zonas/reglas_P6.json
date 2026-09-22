@@ -1,6 +1,6 @@
 {
   "persona": "P6",
-  "responsable": "NOMBRE_PENDIENTE",
+  "responsable": "Ramiro Vega Meza",
   "zonas_asignadas": [6, 12, 18, 24],
   "rol_secundario": "Reproducibilidad y documentacion: diff de corridas y guia de reproduccion",
   "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",

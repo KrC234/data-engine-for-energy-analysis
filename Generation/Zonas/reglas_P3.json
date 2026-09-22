@@ -1,6 +1,6 @@
 {
   "persona": "P3",
-  "responsable": "NOMBRE_PENDIENTE",
+  "responsable": "Isabela Mosquera Fernandez",
   "zonas_asignadas": [3, 9, 15, 21],
   "rol_secundario": "Reglas maestras y anomalias: maestro de Rules.json y sorteo de eventos",
   "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",

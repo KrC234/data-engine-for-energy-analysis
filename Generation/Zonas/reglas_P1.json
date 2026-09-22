@@ -1,6 +1,6 @@
 {
   "persona": "P1",
-  "responsable": "NOMBRE_PENDIENTE",
+  "responsable": "Mateo Jimenez Perez",
   "zonas_asignadas": [1, 7, 13, 19],
   "rol_secundario": "Lider de integracion y corrida maestra",
   "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",

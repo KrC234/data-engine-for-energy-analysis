@@ -1,6 +1,6 @@
 {
   "persona": "P4",
-  "responsable": "NOMBRE_PENDIENTE",
+  "responsable": "Aalan Kalid Ruiz Colin",
   "zonas_asignadas": [4, 10, 16, 22],
   "rol_secundario": "Persistencia: esquema de 13 tablas, insercion por lotes y checkpoints",
   "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",

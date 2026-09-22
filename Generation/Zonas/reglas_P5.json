@@ -1,6 +1,6 @@
 {
   "persona": "P5",
-  "responsable": "NOMBRE_PENDIENTE",
+  "responsable": "Sergio Martinez Blas",
   "zonas_asignadas": [5, 11, 17, 23],
   "rol_secundario": "Validacion de integridad: conteos, claves y energias no negativas",
   "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",
