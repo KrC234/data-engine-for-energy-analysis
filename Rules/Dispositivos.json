@@ -1,0 +1,34 @@
+{
+    "dispositivos": [   
+        {
+            "marca": "Medisur Sistemas", 
+            "prefijo": "MDS",
+            "modelos": ["M9C", "M7B", "MRX", "M77"],
+            "lotes": ["22E","22A","23C","25D"]
+        },
+        {
+            "marca": "Kronos Energía", 
+            "prefijo": "KRE",
+            "modelos": ["X2A", "X2B", "X45", "X1X"],
+            "lotes": ["19E","24A","25B","26F"]
+        }, 
+        {
+            "marca": "Mateo Systems", 
+            "prefijo": "MJP",
+            "modelos": ["MJ4", "M45", "JP4", "N77"],
+            "lotes": ["21A","22F","25C","26F"]
+        }
+    ],
+    "fechas" :[
+        {
+            "dia":1,
+            "mes":1,
+            "año":2019
+        },
+        {
+            "dia":31,
+            "mes":12,
+            "año":2022 
+        }
+    ]
+}
