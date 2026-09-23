@@ -1,7 +1,13 @@
+
 {
   "persona": "P3",
   "responsable": "Isabela Mosquera Fernandez",
-  "zonas_asignadas": [3, 9, 15, 21],
+  "zonas_asignadas": [
+    3,
+    9,
+    15,
+    21
+  ],
   "rol_secundario": "Reglas maestras y anomalias: maestro de Rules.json y sorteo de eventos",
   "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",
   "zonas": [
@@ -9,37 +15,37 @@
       "id_zona": 3,
       "nombre": "Barrio de Coyoltzinco",
       "tipo_urbano": "POPULAR",
-      "superficie_km2": 1.860,
-      "factor_socioeconomico": 0.790,
-      "n_servicios_previstos": 0,
-      "notas": "Zona ancla de la propuesta. Zona densa: mas servicios por km2."
+      "superficie_km2": 1.86,
+      "factor_socioeconomico": 0.79,
+      "n_servicios_previstos": 145,
+      "notas": "Referencia basada en 4 AGEB de San Andrés Cuexcontitlán: 18180 habitantes, 3877 viviendas y grado de rezago representativo Alto. Factor P6 0.875 reescalado a 0.78. Zona ancla de la propuesta: se conservan nombre, superficie y factor (0.79)."
     },
     {
       "id_zona": 9,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre segun RD-06 y definir caracter urbano distinto al de la zona 3."
+      "nombre": "Colonia Chimalquetzan",
+      "tipo_urbano": "MIXTA",
+      "superficie_km2": 2.71,
+      "factor_socioeconomico": 0.95,
+      "n_servicios_previstos": 168,
+      "notas": "Referencia basada en 4 AGEB de Santiago Tlacotepec: 19744 habitantes, 4465 viviendas y grado de rezago representativo Medio. Factor P6 1.25 reescalado a 0.95."
     },
     {
       "id_zona": 15,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 3 y 9."
+      "nombre": "Fraccionamiento Arboledas de Itzcotepec",
+      "tipo_urbano": "RESIDENCIAL_MEDIA",
+      "superficie_km2": 5.691,
+      "factor_socioeconomico": 1.085,
+      "n_servicios_previstos": 313,
+      "notas": "Referencia basada en 8 AGEB de Santa Ana Tlapaltitlán: 33089 habitantes, 8334 viviendas y grado de rezago representativo Bajo. Factor P6 1.587 reescalado a 1.085."
     },
     {
       "id_zona": 21,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 3, 9 y 15."
+      "nombre": "Tecpanquilco Centro",
+      "tipo_urbano": "CENTRO",
+      "superficie_km2": 1.891,
+      "factor_socioeconomico": 1.204,
+      "n_servicios_previstos": 208,
+      "notas": "Referencia basada en 6 AGEB de Capultitlán: 20703 habitantes, 5555 viviendas y grado de rezago representativo Bajo. Factor P6 1.703 reescalado a 1.204."
     }
   ],
   "mejoras_reglas_propuestas": {
