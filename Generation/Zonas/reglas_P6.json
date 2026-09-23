@@ -7,39 +7,39 @@
   "zonas": [
     {
       "id_zona": 6,
-      "nombre": "Xaltemoyan Poniente",
-      "tipo_urbano": "PERIFERIA",
-      "superficie_km2": 6.740,
-      "factor_socioeconomico": 0.710,
-      "n_servicios_previstos": 0,
-      "notas": "Zona ancla de la propuesta. Zona extensa y de bajo consumo por servicio."
+      "nombre": "Toluca de Lerdo",
+      "tipo_urbano": "CENTRO",
+      "superficie_km2": 0,
+      "factor_socioeconomico": 1.739,
+      "n_servicios_previstos": 245,
+      "notas": "Referencia basada en 76 AGEB de Toluca de Lerdo: 223876 habitantes, 65993 viviendas y grado de rezago representativo Bajo. Superficie pendiente."
     },
     {
       "id_zona": 12,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
+      "nombre": "San Pablo Autopan",
+      "tipo_urbano": "POPULAR",
       "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre segun RD-06 y definir caracter urbano distinto al de la zona 6."
+      "factor_socioeconomico": 0.954,
+      "n_servicios_previstos": 40,
+      "notas": "Referencia basada en 12 AGEB de San Pablo Autopan: 47932 habitantes, 10700 viviendas y grado de rezago representativo Alto. Superficie pendiente."
     },
     {
       "id_zona": 18,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
+      "nombre": "San Cristobal Huichochitlan",
+      "tipo_urbano": "PERIFERIA",
       "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 6 y 12."
+      "factor_socioeconomico": 0.875,
+      "n_servicios_previstos": 35,
+      "notas": "Referencia basada en 12 AGEB de San Cristobal Huichochitlan: 42320 habitantes, 9442 viviendas y grado de rezago representativo Alto. Superficie pendiente."
     },
     {
       "id_zona": 24,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
+      "nombre": "San Lorenzo Tepaltitlan",
+      "tipo_urbano": "RESIDENCIAL_MEDIA",
       "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 6, 12 y 18."
+      "factor_socioeconomico": 1.657,
+      "n_servicios_previstos": 36,
+      "notas": "Referencia basada en 11 AGEB de San Lorenzo Tepaltitlan: 35292 habitantes, 9803 viviendas y grado de rezago representativo Bajo. Superficie pendiente."
     }
   ],
   "mejoras_reglas_propuestas": {
