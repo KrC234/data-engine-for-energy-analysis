@@ -9,37 +9,37 @@
       "id_zona": 6,
       "nombre": "Toluca de Lerdo",
       "tipo_urbano": "CENTRO",
-      "superficie_km2": 0,
+      "superficie_km2": 29.790,
       "factor_socioeconomico": 1.739,
-      "n_servicios_previstos": 245,
-      "notas": "Referencia basada en 76 AGEB de Toluca de Lerdo: 223876 habitantes, 65993 viviendas y grado de rezago representativo Bajo. Superficie pendiente."
+      "n_servicios_previstos": 0,
+      "notas": "Referencia basada en 76 AGEB de Toluca de Lerdo: 223876 habitantes, 65993 viviendas y grado de rezago representativo Bajo. Superficie publicada de 29.790 km2. Cantidad de servicios pendiente de definir en la corrida maestra."
     },
     {
       "id_zona": 12,
       "nombre": "San Pablo Autopan",
       "tipo_urbano": "POPULAR",
-      "superficie_km2": 0,
+      "superficie_km2": 12.637,
       "factor_socioeconomico": 0.954,
-      "n_servicios_previstos": 40,
-      "notas": "Referencia basada en 12 AGEB de San Pablo Autopan: 47932 habitantes, 10700 viviendas y grado de rezago representativo Alto. Superficie pendiente."
+      "n_servicios_previstos": 0,
+      "notas": "Referencia basada en 12 AGEB de San Pablo Autopan: 47932 habitantes, 10700 viviendas y grado de rezago representativo Alto. Superficie publicada de 1263.65 hectareas, equivalente a 12.637 km2. Cantidad de servicios pendiente de definir en la corrida maestra."
     },
     {
       "id_zona": 18,
       "nombre": "San Cristobal Huichochitlan",
       "tipo_urbano": "PERIFERIA",
-      "superficie_km2": 0,
+      "superficie_km2": 6.036,
       "factor_socioeconomico": 0.875,
-      "n_servicios_previstos": 35,
-      "notas": "Referencia basada en 12 AGEB de San Cristobal Huichochitlan: 42320 habitantes, 9442 viviendas y grado de rezago representativo Alto. Superficie pendiente."
+      "n_servicios_previstos": 0,
+      "notas": "Referencia basada en 12 AGEB de San Cristobal Huichochitlan: 42320 habitantes, 9442 viviendas y grado de rezago representativo Alto. Superficie publicada de 603.59 hectareas, equivalente a 6.036 km2. Cantidad de servicios pendiente de definir en la corrida maestra."
     },
     {
       "id_zona": 24,
       "nombre": "San Lorenzo Tepaltitlan",
       "tipo_urbano": "RESIDENCIAL_MEDIA",
-      "superficie_km2": 0,
+      "superficie_km2": 2.945,
       "factor_socioeconomico": 1.657,
-      "n_servicios_previstos": 36,
-      "notas": "Referencia basada en 11 AGEB de San Lorenzo Tepaltitlan: 35292 habitantes, 9803 viviendas y grado de rezago representativo Bajo. Superficie pendiente."
+      "n_servicios_previstos": 0,
+      "notas": "Referencia basada en 11 AGEB de San Lorenzo Tepaltitlan: 35292 habitantes, 9803 viviendas y grado de rezago representativo Bajo. Superficie publicada de 294.51 hectareas, equivalente a 2.945 km2. Cantidad de servicios pendiente de definir en la corrida maestra."
     }
   ],
   "mejoras_reglas_propuestas": {

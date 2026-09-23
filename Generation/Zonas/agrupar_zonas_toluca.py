@@ -4,11 +4,11 @@ import pandas as pd
 
 
 """
-AGRUPACION DE ZONAS REALES DE TOLUCA
+AGRUPACION DE LOCALIDADES REALES DE TOLUCA
 
 Este script toma el archivo GRS_AGEB_Toluca_calibrado.csv,
 que contiene una fila por cada AGEB urbana de Toluca, y agrupa
-las AGEB que pertenecen a la misma localidad.
+las filas que pertenecen a una misma localidad.
 
 Por ejemplo, Sauces aparece en varias filas porque contiene
 varias AGEB. El script junta todas esas filas y genera un solo
@@ -16,13 +16,17 @@ registro para la localidad Sauces.
 
 Para cada localidad se calculan:
 
-- Cantidad de AGEB.
 - Poblacion total.
 - Viviendas habitadas totales.
 - Grado de rezago social representativo.
 - Factor socioeconomico ponderado por viviendas.
-- Lista de las AGEB utilizadas.
-- Servicios propuestos de forma proporcional.
+
+El script no calcula servicios electricos, porque la base
+de CONEVAL no contiene contratos, medidores ni puntos de
+consumo electrico.
+
+El campo n_servicios_previstos se definira posteriormente
+durante la corrida maestra del proyecto.
 
 El archivo original no se modifica.
 
@@ -62,20 +66,6 @@ ARCHIVO_SALIDA = (
 
 
 # ==========================================================
-# CONFIGURACION
-# ==========================================================
-
-# Cuota aproximada asignada al bloque de Ramiro.
-#
-# El script distribuye estos 833 servicios entre todas
-# las localidades, usando las viviendas como referencia.
-#
-# Si no quieres distribuir servicios, cambia 833 por None.
-
-TOTAL_SERVICIOS_RAMIRO = 833
-
-
-# ==========================================================
 # CARGA DE DATOS
 # ==========================================================
 
@@ -108,7 +98,7 @@ def cargar_datos():
             "El archivo de entrada existe, pero esta vacio."
         )
 
-    print(f"\nRegistros AGEB cargados: {len(datos):,}")
+    print(f"\nRegistros cargados: {len(datos):,}")
 
     return datos
 
@@ -119,13 +109,12 @@ def cargar_datos():
 
 def validar_columnas(datos):
     """
-    Comprueba que el archivo tenga las columnas necesarias.
+    Comprueba que el archivo tenga las columnas necesarias
+    para realizar la agrupacion.
     """
 
     columnas_requeridas = {
-        "clave_localidad",
         "nombre_localidad",
-        "clave_ageb",
         "poblacion_total",
         "viviendas_habitadas",
         "grado_rezago_social",
@@ -158,17 +147,13 @@ def validar_columnas(datos):
 def limpiar_datos(datos):
     """
     Limpia las columnas necesarias antes de agrupar.
-
-    Las claves se conservan como texto para no perder ceros
-    o letras presentes en algunas claves de AGEB.
     """
 
     datos = datos.copy()
 
+    # Limpiar columnas de texto.
     columnas_texto = [
-        "clave_localidad",
         "nombre_localidad",
-        "clave_ageb",
         "grado_rezago_social"
     ]
 
@@ -179,6 +164,7 @@ def limpiar_datos(datos):
             .str.strip()
         )
 
+    # Convertir columnas cuantitativas a valores numericos.
     columnas_numericas = [
         "poblacion_total",
         "viviendas_habitadas",
@@ -191,7 +177,7 @@ def limpiar_datos(datos):
             errors="coerce"
         )
 
-    # Elimina filas que no contienen datos indispensables.
+    # Eliminar registros sin valores indispensables.
     datos = datos.dropna(
         subset=[
             "poblacion_total",
@@ -200,13 +186,13 @@ def limpiar_datos(datos):
         ]
     ).copy()
 
-    # Elimina nombres vacios o convertidos desde valores nulos.
+    # Eliminar localidades sin nombre.
     datos = datos[
         (datos["nombre_localidad"] != "")
         & (datos["nombre_localidad"].str.lower() != "nan")
     ].copy()
 
-    # Solo se aceptan valores no negativos.
+    # Eliminar registros con cantidades negativas.
     datos = datos[
         (datos["poblacion_total"] >= 0)
         & (datos["viviendas_habitadas"] >= 0)
@@ -231,22 +217,23 @@ def limpiar_datos(datos):
 
 def calcular_factor_ponderado(grupo):
     """
-    Calcula el factor de toda una localidad.
+    Calcula el factor socioeconomico de una localidad.
 
     Formula:
 
-        suma(factor de AGEB * viviendas de AGEB)
-        -----------------------------------------
-              viviendas totales de localidad
+        suma(factor de cada fila * viviendas de cada fila)
+        ---------------------------------------------------
+                  viviendas totales de la localidad
 
-    De esta manera, una AGEB con muchas viviendas tiene mayor
-    peso que una AGEB con pocas viviendas.
+    Las filas con mas viviendas tienen mayor peso en el
+    resultado que las filas con pocas viviendas.
     """
 
     total_viviendas = (
         grupo["viviendas_habitadas"].sum()
     )
 
+    # Si no hay viviendas, se utiliza el promedio simple.
     if total_viviendas <= 0:
         return grupo["factor_socioeconomico"].mean()
 
@@ -266,6 +253,12 @@ def obtener_rezago_representativo(grupo):
     """
     Selecciona el grado de rezago que representa la mayor
     cantidad de viviendas dentro de la localidad.
+
+    Ejemplo:
+
+    Si la mayor cantidad de viviendas esta en registros con
+    rezago Bajo, el grado representativo de la localidad
+    sera Bajo.
     """
 
     viviendas_por_rezago = (
@@ -283,77 +276,51 @@ def obtener_rezago_representativo(grupo):
 
 
 # ==========================================================
-# LISTA DE AGEB
-# ==========================================================
-
-def obtener_lista_ageb(grupo):
-    """
-    Reune las claves de AGEB de cada localidad en un texto.
-    """
-
-    claves = sorted(
-        grupo["clave_ageb"]
-        .dropna()
-        .astype(str)
-        .unique()
-    )
-
-    return ", ".join(claves)
-
-
-# ==========================================================
 # AGRUPACION POR LOCALIDAD
 # ==========================================================
 
 def agrupar_localidades(datos):
     """
-    Agrupa las AGEB que tienen la misma clave de localidad.
+    Agrupa todas las filas que tienen el mismo nombre de
+    localidad.
 
-    El resultado contiene una fila por cada localidad real.
+    El resultado contiene una sola fila por cada localidad.
     """
 
     registros_agrupados = []
 
     grupos = datos.groupby(
-        [
-            "clave_localidad",
-            "nombre_localidad"
-        ],
+        "nombre_localidad",
         sort=True
     )
 
-    for (
-        clave_localidad,
-        nombre_localidad
-    ), grupo in grupos:
+    for nombre_localidad, grupo in grupos:
 
+        # Sumar la poblacion de todos los registros
+        # correspondientes a la localidad.
         poblacion_total = (
             grupo["poblacion_total"].sum()
         )
 
+        # Sumar las viviendas de todos los registros
+        # correspondientes a la localidad.
         viviendas_totales = (
             grupo["viviendas_habitadas"].sum()
         )
 
-        cantidad_ageb = (
-            grupo["clave_ageb"].nunique()
-        )
-
+        # Calcular el factor ponderado por viviendas.
         factor_ponderado = (
             calcular_factor_ponderado(grupo)
         )
 
+        # Obtener el grado de rezago representativo.
         rezago_representativo = (
             obtener_rezago_representativo(grupo)
         )
 
-        claves_ageb = obtener_lista_ageb(grupo)
-
         registros_agrupados.append(
             {
-                "clave_localidad": clave_localidad,
                 "nombre_localidad": nombre_localidad,
-                "cantidad_ageb": int(cantidad_ageb),
                 "poblacion_total": int(
                     round(poblacion_total)
                 ),
@@ -365,8 +332,7 @@ def agrupar_localidades(datos):
                 "factor_socioeconomico": round(
                     float(factor_ponderado),
                     3
-                ),
-                "claves_ageb": claves_ageb
+                )
             }
         )
 
@@ -379,7 +345,7 @@ def agrupar_localidades(datos):
             "No fue posible generar localidades agrupadas."
         )
 
-    # Ordenar de mayor a menor poblacion.
+    # Ordenar las localidades de mayor a menor poblacion.
     resultado = resultado.sort_values(
         by=[
             "poblacion_total",
@@ -406,109 +372,12 @@ def agrupar_localidades(datos):
 
 
 # ==========================================================
-# DISTRIBUCION PROPORCIONAL DE SERVICIOS
-# ==========================================================
-
-def asignar_servicios_proporcionales(
-    resultado,
-    total_servicios
-):
-    """
-    Reparte los servicios entre las localidades según su
-    cantidad de viviendas.
-
-    Formula inicial:
-
-        viviendas de localidad
-        ----------------------- * total de servicios
-          viviendas totales
-
-    La suma final se ajusta para que sea exactamente igual
-    al total solicitado.
-    """
-
-    if total_servicios is None:
-        return resultado
-
-    if total_servicios <= 0:
-        raise ValueError(
-            "El total de servicios debe ser mayor que cero."
-        )
-
-    resultado = resultado.copy()
-
-    total_viviendas = (
-        resultado["viviendas_habitadas"].sum()
-    )
-
-    if total_viviendas <= 0:
-        raise ValueError(
-            "No se pueden asignar servicios porque no "
-            "existen viviendas validas."
-        )
-
-    # Calculo proporcional sin redondear.
-    resultado["_servicios_exactos"] = (
-        resultado["viviendas_habitadas"]
-        / total_viviendas
-        * total_servicios
-    )
-
-    # Asignacion inicial usando la parte entera.
-    resultado["servicios_propuestos"] = (
-        resultado["_servicios_exactos"]
-        .astype(int)
-    )
-
-    # Se calcula cuantos servicios faltan por distribuir.
-    servicios_asignados = (
-        resultado["servicios_propuestos"].sum()
-    )
-
-    servicios_faltantes = (
-        total_servicios - servicios_asignados
-    )
-
-    # Parte decimal de cada calculo.
-    resultado["_residuo"] = (
-        resultado["_servicios_exactos"]
-        - resultado["servicios_propuestos"]
-    )
-
-    if servicios_faltantes > 0:
-        # Los servicios restantes se entregan a las
-        # localidades con mayor parte decimal.
-        indices = (
-            resultado["_residuo"]
-            .sort_values(ascending=False)
-            .head(servicios_faltantes)
-            .index
-        )
-
-        resultado.loc[
-            indices,
-            "servicios_propuestos"
-        ] += 1
-
-    # Eliminar columnas auxiliares.
-    resultado.drop(
-        columns=[
-            "_servicios_exactos",
-            "_residuo"
-        ],
-        inplace=True
-    )
-
-    return resultado
-
-
-# ==========================================================
 # MOSTRAR RESULTADOS
 # ==========================================================
 
 def mostrar_resultados(resultado):
     """
-    Muestra el resumen de las localidades agrupadas.
+    Muestra un resumen de las localidades agrupadas.
     """
 
     print("\n" + "=" * 70)
@@ -530,11 +399,6 @@ def mostrar_resultados(resultado):
         f"{resultado['viviendas_habitadas'].sum():,.0f}"
     )
 
-    print(
-        f"AGEB agrupadas: "
-        f"{resultado['cantidad_ageb'].sum():,.0f}"
-    )
-
     print("\nLocalidades por grado de rezago:")
     print("-" * 70)
 
@@ -548,19 +412,12 @@ def mostrar_resultados(resultado):
 
     columnas_muestra = [
         "id_referencia",
-        "clave_localidad",
         "nombre_localidad",
-        "cantidad_ageb",
         "poblacion_total",
         "viviendas_habitadas",
         "grado_rezago_representativo",
         "factor_socioeconomico"
     ]
-
-    if "servicios_propuestos" in resultado.columns:
-        columnas_muestra.append(
-            "servicios_propuestos"
-        )
 
     print("\nPrimeras 20 localidades:")
     print("-" * 70)
@@ -571,23 +428,23 @@ def mostrar_resultados(resultado):
         .to_string(index=False)
     )
 
-    if "servicios_propuestos" in resultado.columns:
-        print(
-            "\nTotal de servicios propuestos: "
-            f"{resultado['servicios_propuestos'].sum():,}"
-        )
-
 
 # ==========================================================
-# GUARDAR RESULTADO
+# GUARDAR RESULTADOS
 # ==========================================================
 
 def guardar_resultados(resultado):
     """
-    Guarda el resultado con una fila por localidad.
+    Guarda una fila por cada localidad.
+
+    El archivo generado no contiene:
+
+    - Clave de localidad.
+    - Claves de AGEB.
+    - Cantidad de AGEB.
+    - Servicios propuestos.
     """
 
-    # Asegura que la carpeta exista.
     ARCHIVO_SALIDA.parent.mkdir(
         parents=True,
         exist_ok=True
@@ -613,35 +470,27 @@ def guardar_resultados(resultado):
 
 def main():
     """
-    Ejecuta el proceso completo.
+    Ejecuta el proceso completo de agrupacion.
     """
 
-    # 1. Cargar el CSV con las AGEB de Toluca.
+    # 1. Cargar el CSV de Toluca.
     datos = cargar_datos()
 
-    # 2. Validar las columnas.
+    # 2. Validar las columnas necesarias.
     validar_columnas(datos)
 
-    # 3. Limpiar los datos.
+    # 3. Limpiar los registros.
     datos = limpiar_datos(datos)
 
-    # 4. Agrupar las AGEB por localidad.
+    # 4. Agrupar por nombre de localidad.
     resultado = agrupar_localidades(datos)
 
-    # 5. Distribuir los servicios proporcionalmente.
-    resultado = asignar_servicios_proporcionales(
-        resultado,
-        TOTAL_SERVICIOS_RAMIRO
-    )
-
-    # 6. Mostrar un resumen.
+    # 5. Mostrar el resumen.
     mostrar_resultados(resultado)
 
-    # 7. Guardar el resultado.
+    # 6. Guardar el nuevo CSV.
     guardar_resultados(resultado)
 
 
-# Esta parte es indispensable para ejecutar main()
-# al presionar Run en Visual Studio Code.
 if __name__ == "__main__":
     main()
