@@ -1,44 +1,55 @@
 # Asignación de zonas: generación paralela entre 6 personas
 
 Documento interno de trabajo. Redactado el 21 de septiembre de 2026 sobre el repositorio
-data-engine-for-energy-analysis, rama `feat/division-zonas-6-personas`.
+data-engine-for-energy-analysis. Actualizado en la rama `dev-mateo` con la territorialización
+real de Toluca (pipeline CONEVAL GRS AGEB 2020) y la RD-06 reescrita del Entregable 1 v2.1.
 
 El objetivo es simple: dividir la generación de los datos sintéticos de HyperDataSynthetic
-entre 6 personas, asignando a cada una 4 de las 24 zonas de Nexpahuacán, para que cada
+entre 6 personas, asignando a cada una 4 de las 24 zonas de Toluca, para que cada
 quien mejore sus reglas y produzca su bloque de registros sin pisar a los demás.
 
 ## 1. El punto de partida
 
-Una precisión de escenario: el Valle de Nexpahuacán es un solo municipio ficticio de unos
-400.000 habitantes. No hay 24 municipios. Lo que hay son 24 zonas, definidas como sectores
-geográficos: un barrio, un fraccionamiento, una colonia. Cada zona es el nivel intermedio
+Una precisión de escenario: el municipio real de Toluca (cabecera: Toluca de Lerdo) tiene
+910.608 habitantes según el Censo 2020 del INEGI. No hay 24 municipios. Lo que hay son 24
+zonas, definidas como sectores geográficos anclados a localidades y sectores reales del
+municipio: un barrio, un fraccionamiento, una colonia. Cada zona es el nivel intermedio
 de la cadena zona 1:N servicio 1:N medidor 1:N lectura, así que es la unidad natural de
 reparto.
 
 Reglas que condicionan el reparto:
 
-- RD-06: ningún nombre de zona puede venir de una fuente externa real ni numerarse de forma
-  trivial. Solo 6 zonas tienen nombre definido en la propuesta. Las 18 restantes las compone
-  el equipo.
+- RD-06 (reescrita conforme al Entregable 1 v2.1): los nombres de zona y localidad *pueden*
+  provenir de fuentes oficiales (CONEVAL, INEGI, IMPLAN Toluca). Lo que debe ser sintético
+  y no replicar información real son las direcciones exactas, números de servicio, series
+  de medidor e identificadores individuales. Cada integrante ancla sus 4 zonas a
+  localidades reales del pipeline CONEVAL GRS AGEB 2020 sin solaparse.
+  Localidades ya ancladas: P1 usa San Mateo Oxtotitlán, San José Guadalupe Otzacatipan,
+  Sauces y San Nicolás Tolentino. P6 usa Toluca de Lerdo, San Pablo Autopan, San Cristóbal
+  Huichochitlán y San Lorenzo Tepaltitlán. P3 referencia San Andrés Cuexcontitlán, Santiago
+  Tlacotepec, Santa Ana Tlapaltitlán y Capultitlán. P2 usa San Andrés Mizquetenco.
 - Los caracteres urbanos son 6: CENTRO, RESIDENCIAL_ALTA, RESIDENCIAL_MEDIA, POPULAR, MIXTA
   y PERIFERIA. Con 24 zonas, cada carácter aparece 4 veces.
-- Cada zona declara superficie (km2) y factor socioeconomico entre 0.5 y 2.0.
+- Cada zona declara superficie (km2) y factor socioeconomico entre 0.5 y 2.0, con el factor
+  de la localidad real tomado del pipeline CONEVAL (Muy bajo 2.000, Bajo 1.625, Medio 1.250,
+  Alto 0.875, Muy alto 0.500).
 - Las 13 tablas y la canalización de 8 etapas del README no cambian.
 
 ## 2. Matriz de asignación
 
 Seis personas, cuatro zonas cada una, con el rol secundario que exige la rúbrica
 (obligatorio que cada integrante tenga más de un rol). Los nombres reales se completan
-cuando el señor los entregue.
+cuando el señor los entregue. Las localidades reales de anclaje ya definidas por cada
+integrante en sus ramas se muestran en la columna "Ancla a localidad real".
 
-| Persona | Zonas (id) | Zona ancla existente | Carácter del ancla | Cuota servicios | Cuota lecturas | Rol secundario |
+| Persona | Zonas (id) | Ancla a localidad real (Toluca) | Carácter del ancla | Cuota servicios | Cuota lecturas | Rol secundario |
 |---|---|---|---|---|---|---|
-| P1, Mateo Jiménez Pérez | 1, 7, 13, 19 | Atzinquilpa | CENTRO | unos 833 | unos 1,800,000 | Líder de integración: une los 6 bloques y corre la corrida maestra |
-| P2, David Nieto Ayala | 2, 8, 14, 20 | San Andrés Mizquetenco | RESIDENCIAL_MEDIA | unos 833 | unos 1,800,000 | Perfiles de carga y calendario (1.296 perfiles, 90 días) |
-| P3, Isabela Mosquera Fernández | 3, 9, 15, 21 | Barrio de Coyoltzinco | POPULAR | unos 833 | unos 1,800,000 | Reglas maestras y anomalías: maestro de Rules.json, sorteo de eventos |
-| P4, Aalan Kalid Ruiz Colin | 4, 10, 16, 22 | Fracc. Villas de Ocoyotenco | RESIDENCIAL_ALTA | unos 833 | unos 1,800,000 | Persistencia: esquema de 13 tablas, inserción por lotes, checkpoints |
-| P5, Sergio Martínez Blas | 5, 11, 17, 23 | Colonia Nexpahuacán Norte | MIXTA | unos 833 | unos 1,800,000 | Validación de integridad: conteos, claves, energías no negativas |
-| P6, Ramiro Vega Meza | 6, 12, 18, 24 | Xaltemoyan Poniente | PERIFERIA | unos 833 | unos 1,800,000 | Reproducibilidad y documentación: diff de corridas, guía |
+| P1, Mateo Jiménez Pérez | 1, 7, 13, 19 | 1 San Mateo Oxtotitlán · 7 San José Guadalupe Otzacatipan · 13 Sauces · 19 San Nicolás Tolentino | CENTRO (z1) | unos 833 | unos 1,800,000 | Líder de integración: une los 6 bloques y corre la corrida maestra |
+| P2, David Nieto Ayala | 2, 8, 14, 20 | 2 San Andrés Mizquetenco | RESIDENCIAL_MEDIA | unos 833 | unos 1,800,000 | Perfiles de carga y calendario (1.296 perfiles, 90 días) |
+| P3, Isabela Mosquera Fernández | 3, 9, 15, 21 | 3 San Andrés Cuexcontitlán · 9 Santiago Tlacotepec · 15 Santa Ana Tlapaltitlán · 21 Capultitlán | POPULAR (z3) | unos 833 | unos 1,800,000 | Reglas maestras y anomalías: maestro de Rules.json, sorteo de eventos |
+| P4, Aalan Kalid Ruiz Colin | 4, 10, 16, 22 | por definir (ancla Fracc. Villas de Ocoyotenco) | RESIDENCIAL_ALTA | unos 833 | unos 1,800,000 | Persistencia: esquema de 13 tablas, inserción por lotes, checkpoints |
+| P5, Sergio Martínez Blas | 5, 11, 17, 23 | por definir (ancla Colonia Nexpahuacán Norte) | MIXTA | unos 833 | unos 1,800,000 | Validación de integridad: conteos, claves, energías no negativas |
+| P6, Ramiro Vega Meza | 6, 12, 18, 24 | 6 Toluca de Lerdo · 12 San Pablo Autopan · 18 San Cristóbal Huichochitlán · 24 San Lorenzo Tepaltitlán | CENTRO (z6) | unos 833 | unos 1,800,000 | Reproducibilidad y documentación: diff de corridas, guía |
 
 Las cuotas son orientativas. El reparto fino de los 5.000 servicios entre las 24 zonas
 depende de la superficie y del carácter de cada zona (una zona popular es más densa que una
@@ -46,9 +57,11 @@ residencial alta) y lo define cada dueño en sus reglas. La suma de los seis blo
 cuadrar con los totales oficiales: 5.000 servicios, 5.260 medidores, 10.800.000 lecturas,
 unos 16.800 eventos, unas 12.900 alertas y 15.000 recibos.
 
-Cada persona compone los nombres de sus 3 zonas sin ancla siguiendo RD-06, con raíces y
-terminaciones propias del equipo. En cada bloque deben convivir 4 caracteres urbanos
-distintos, procurando una mezcla parecida entre personas para que el trabajo sea homogéneo.
+Cada persona ancla sus 4 zonas a localidades reales del municipio de Toluca siguiendo la
+RD-06 reescrita, sin repetir localidades ya tomadas por compañeros. En cada bloque deben
+convivir 4 caracteres urbanos distintos, procurando una mezcla parecida entre personas para
+que el trabajo sea homogéneo. La derivación de superficies se hace con las densidades del
+IMPLAN Toluca y el factor socioeconómico, con el factor CONEVAL de la localidad.
 
 ## 3. Semillas y reproducibilidad
 
@@ -123,7 +136,9 @@ Alineado al Plan de Desarrollo del 21 de septiembre al 28 de noviembre de 2026.
 
 ## 8. Pendientes
 
-- Composición de las 18 zonas sin nombre (3 por persona).
+- Anclaje de las zonas pendientes: P4 (4, 10, 16, 22) y P5 (5, 11, 17, 23) aún no fijan
+  localidades reales; P2 (8, 14, 20) y P3 (sin ancla) completan el resto. P1 y P6 ya
+  tienen sus 4 localidades ancladas.
 - Revisión y visto bueno del señor sobre esta asignación.
 - Decidir la herramienta de gestión de tickets: Trello (en uso) o Jira, y aplicar la
   política de ramas del equipo (una rama por ticket, main protegida) a este repositorio.

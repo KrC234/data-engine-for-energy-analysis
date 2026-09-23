@@ -3,19 +3,28 @@
   "responsable": "Mateo Jimenez Perez",
   "zonas_asignadas": [1, 7, 13, 19],
   "rol_secundario": "Lider de integracion y corrida maestra",
-  "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",
-  "metodo_semilla_zona": "sha256(f'{semilla_raiz}-z{id_zona}').hexdigest()[:8] interpretado como entero base16 (32 bits). Debe recalcularse cuando el lider defina la semilla_raiz real de la corrida maestra; el valor mostrado aqui es solo de referencia con la semilla PENDIENTE.",
+  "semilla_raiz": "20260101",
+  "metodo_semilla_zona": "sha256(f'{semilla_raiz}-z{id_zona}').hexdigest()[:8] interpretado como entero base16 (32 bits). Recalculadas con la semilla raiz oficial 20260101 del Entregable 1 v2.1. Calibracion territorial: 46 localidades reales de Toluca del pipeline CONEVAL GRS AGEB 2020.",
   "zonas": [
     {
       "id_zona": 1,
-      "nombre": "Atzinquilpa",
+      "nombre": "San Mateo Oxtotitlan",
       "tipo_urbano": "CENTRO",
-      "superficie_km2": 2.140,
-      "factor_socioeconomico": 1.180,
-      "densidad_servicios_por_km2": 129.91,
+      "superficie_km2": 3.947,
+      "factor_socioeconomico": 1.711,
+      "densidad_servicios_por_km2": 70.43,
       "n_servicios_previstos": 278,
-      "semilla_zona": 431121654,
-      "semilla_zona_hex": "19b264f6",
+      "semilla_zona": 546691984,
+      "semilla_zona_hex": "2095db90",
+      "localidad_referencia": {
+        "id_inegi": "151060080",
+        "poblacion_total": 22500,
+        "viviendas_habitadas": 6232,
+        "grado_rezago_representativo": "Bajo",
+        "densidad_hab_ha": 57.0,
+        "fuente": "CONEVAL GRS AGEB 2020 y censo INEGI 2020",
+        "criterio_anclaje": "Urbano consolidado con fuerte interaccion con el centro historico; unico candidato CENTRO disponible sin colisionar con P6 (Toluca de Lerdo) ni P3 (Capultitlan)."
+      },
       "mezcla_servicios": {
         "VIV_DEPTO": 118,
         "VIV_RES": 35,
@@ -27,18 +36,27 @@
         "ALUM_VIA": 10,
         "INFR_BOM": 4
       },
-      "notas": "Zona ancla de la propuesta. Mezcla tipo de servicios del centro: comercio y oficinas de gobierno concentrados, vivienda predominantemente en departamentos densos (se excluyen VIV_SOCIAL y VIV_UNIF por incompatibles con la densidad del centro historico)."
+      "notas": "Zona ancla anclada a la localidad real San Mateo Oxtotitlan (22,500 habitantes, 6,232 viviendas, rezago Bajo, factor CONEVAL 1.711). Caracter CENTRO: comercio y oficinas concentrados, vivienda predominantemente en departamentos densos (se excluyen VIV_SOCIAL y VIV_UNIF por incompatibles con la densidad del area urbana consolidada). Densidad 57 hab/ha (IMPLAN 2020)."
     },
     {
       "id_zona": 7,
-      "nombre": "Barrio de Xiloxochitlan",
+      "nombre": "San Jose Guadalupe Otzacatipan",
       "tipo_urbano": "POPULAR",
-      "superficie_km2": 1.720,
-      "factor_socioeconomico": 0.760,
-      "densidad_servicios_por_km2": 150.00,
+      "superficie_km2": 2.281,
+      "factor_socioeconomico": 0.875,
+      "densidad_servicios_por_km2": 113.11,
       "n_servicios_previstos": 258,
-      "semilla_zona": 3395951374,
-      "semilla_zona_hex": "ca6a1b0e",
+      "semilla_zona": 602974255,
+      "semilla_zona_hex": "23f0a82f",
+      "localidad_referencia": {
+        "id_inegi": "151060072",
+        "poblacion_total": 7984,
+        "viviendas_habitadas": 1797,
+        "grado_rezago_representativo": "Alto",
+        "densidad_hab_ha": 35.0,
+        "fuente": "CONEVAL GRS AGEB 2020 y censo INEGI 2020",
+        "criterio_anclaje": "Rezago Alto con factor 0.875; una de las localidades mas pobladas del municipio. Sin colision con P2/P3/P6."
+      },
       "mezcla_servicios": {
         "VIV_UNIF": 150,
         "VIV_DEPTO": 64,
@@ -50,18 +68,27 @@
         "ALUM_VIA": 3,
         "INFR_BOM": 2
       },
-      "notas": "Barrio popular muy denso y homogeneo, dominado por vivienda unifamiliar autoconstruida y comercio de barrio. Se excluye VIV_SOCIAL segun Services_Rules.json (la vivienda social se modela en otras zonas del municipio)."
+      "notas": "Zona POPULAR anclada a la localidad real San Jose Guadalupe Otzacatipan (7,984 habitantes, 1,797 viviendas, rezago Alto, factor CONEVAL 0.875). Barrio popular denso y homogeneo, dominado por vivienda unifamiliar autoconstruida y comercio de barrio. Se excluye VIV_SOCIAL segun Services_Rules.json (la vivienda social se modela en otras zonas del municipio). Densidad 35 hab/ha (IMPLAN 2020)."
     },
     {
       "id_zona": 13,
-      "nombre": "Fracc. Residencial Cuauhtenco",
+      "nombre": "Sauces",
       "tipo_urbano": "RESIDENCIAL_ALTA",
-      "superficie_km2": 3.850,
-      "factor_socioeconomico": 1.780,
-      "densidad_servicios_por_km2": 40.00,
+      "superficie_km2": 1.871,
+      "factor_socioeconomico": 2.000,
+      "densidad_servicios_por_km2": 82.31,
       "n_servicios_previstos": 154,
-      "semilla_zona": 3970226670,
-      "semilla_zona_hex": "eca4d9ee",
+      "semilla_zona": 3070470307,
+      "semilla_zona_hex": "b703a8a3",
+      "localidad_referencia": {
+        "id_inegi": "151060235",
+        "poblacion_total": 27628,
+        "viviendas_habitadas": 8824,
+        "grado_rezago_representativo": "Muy bajo",
+        "densidad_hab_ha": 147.7,
+        "fuente": "CONEVAL GRS AGEB 2020, censo INEGI 2020 e IMPLAN Toluca",
+        "criterio_anclaje": "Rezago Muy bajo con factor maximo 2.000; zona de conjuntos urbanos residenciales de alta plusvalia (densidad 147.7 hab/ha, la 2a mas alta del municipio). Candidata natural RESIDENCIAL_ALTA."
+      },
       "mezcla_servicios": {
         "VIV_RES": 95,
         "VIV_DEPTO": 36,
@@ -72,18 +99,27 @@
         "ALUM_VIA": 5,
         "INFR_BOM": 2
       },
-      "notas": "Fraccionamiento cerrado en las faldas del valle, baja densidad y consumo por servicio alto. Excluye VIV_SOCIAL, VIV_UNIF y MERCADO segun Services_Rules.json."
+      "notas": "Zona RESIDENCIAL_ALTA anclada a la localidad real Sauces (27,628 habitantes, 8,824 viviendas, rezago Muy bajo, factor CONEVAL maximo 2.000). Conjuntos urbanos residenciales de alta plusvalia (p.ej. desarrollos tipo Crespa Town en el corredor de La Crespa). Consumo por servicio alto. Excluye VIV_SOCIAL, VIV_UNIF y MERCADO segun Services_Rules.json."
     },
     {
       "id_zona": 19,
-      "nombre": "Nexcoyotlan Oriente",
+      "nombre": "San Nicolas Tolentino",
       "tipo_urbano": "PERIFERIA",
-      "superficie_km2": 7.230,
-      "factor_socioeconomico": 0.640,
-      "densidad_servicios_por_km2": 19.78,
+      "superficie_km2": 3.233,
+      "factor_socioeconomico": 0.875,
+      "densidad_servicios_por_km2": 44.23,
       "n_servicios_previstos": 143,
-      "semilla_zona": 4256263824,
-      "semilla_zona_hex": "fdb16e90",
+      "semilla_zona": 1669816255,
+      "semilla_zona_hex": "63875fbf",
+      "localidad_referencia": {
+        "id_inegi": "151060082",
+        "poblacion_total": 8406,
+        "viviendas_habitadas": 1900,
+        "grado_rezago_representativo": "Alto",
+        "densidad_hab_ha": 26.0,
+        "fuente": "CONEVAL GRS AGEB 2020 y censo INEGI 2020",
+        "criterio_anclaje": "Rezago Alto, densidad baja (26 hab/ha) y periurbanizacion irregular en transito ejidal-urbana junto al aeropuerto; perfil PERIFERIA natural sin colision con P2/P3/P6."
+      },
       "mezcla_servicios": {
         "VIV_UNIF": 40,
         "VIV_SOCIAL": 15,
@@ -96,7 +132,7 @@
         "ALUM_VIA": 8,
         "INFR_BOM": 6
       },
-      "notas": "Periferia extensa rumbo a los cerros, baja densidad, mezcla mas comercial de lo habitual por corredores de paso y comercio informal a pie de carretera; incluye vivienda social."
+      "notas": "Zona PERIFERIA anclada a la localidad real San Nicolas Tolentino (8,406 habitantes, 1,900 viviendas, rezago Alto, factor CONEVAL 0.875). Periferia de baja densidad (26 hab/ha) en transito ejidal-urbano junto al Aeropuerto Internacional de Toluca, con comercio informal de paso; incluye vivienda social."
     }
   ],
   "mejoras_reglas_propuestas": {
@@ -107,35 +143,35 @@
         "bulto_noche": {"centro": 20.0, "ancho": 2.0, "base": 0.05, "amplitud": 2.00}
       },
       "residencial_zona_1_centro": {
-        "descripcion": "Departamentos densos del centro: bulto nocturno un poco mas temprano y estrecho (horarios de oficina mas homogeneos).",
+        "descripcion": "Departamentos densos del centro (San Mateo Oxtotitlan): bulto nocturno un poco mas temprano y estrecho (horarios de oficina mas homogeneos).",
         "bulto_noche": {"centro": 19.5, "ancho": 1.7, "base": 0.05, "amplitud": 1.85}
       },
       "residencial_zona_7_popular": {
-        "descripcion": "Vivienda popular: pico nocturno mas marcado y estrecho, jornadas laborales sincronizadas.",
+        "descripcion": "Vivienda popular (San Jose Guadalupe Otzacatipan): pico nocturno mas marcado y estrecho, jornadas laborales sincronizadas.",
         "bulto_noche": {"centro": 20.0, "ancho": 1.8, "base": 0.05, "amplitud": 2.10}
       },
       "residencial_zona_13_residencial_alta": {
-        "descripcion": "Vivienda de mayor superficie y equipamiento (calefaccion, electrodomesticos, posible carga vehicular): amplitud mayor y bulto mas ancho.",
+        "descripcion": "Vivienda de mayor superficie y equipamiento en Sauces (calefaccion, electrodomesticos, posible carga vehicular): amplitud mayor y bulto mas ancho.",
         "bulto_noche": {"centro": 20.5, "ancho": 2.3, "base": 0.10, "amplitud": 2.40}
       },
       "residencial_zona_19_periferia": {
-        "descripcion": "Periferia: base mas plana durante el dia por actividad domestica dispersa/informal y bulto nocturno mas ancho por horarios de traslado heterogeneos; amplitud algo menor por menor poder adquisitivo de electrodomesticos.",
+        "descripcion": "Periferia de San Nicolas Tolentino: base mas plana durante el dia por actividad domestica dispersa/informal y bulto nocturno mas ancho por horarios de traslado heterogeneos; amplitud algo menor por menor poder adquisitivo de electrodomesticos.",
         "bulto_noche": {"centro": 20.5, "ancho": 2.5, "base": 0.30, "amplitud": 1.50}
       },
       "comercial_zona_1_centro": {
-        "descripcion": "Comercio y oficinas del centro historico abren mas temprano que el promedio municipal (mercado matinal, tramites de gobierno); se adelanta el centro de la curva y se sube la amplitud.",
+        "descripcion": "Comercio y oficinas del area central de San Mateo Oxtotitlan abren mas temprano que el promedio municipal (mercado matinal, tramites de gobierno); se adelanta el centro de la curva y se sube la amplitud.",
         "curva": {"centro": 12.5, "ancho": 3.5, "base": 0.15, "amplitud": 2.30}
       },
       "comercial_zona_7_popular": {
-        "descripcion": "Comercio de barrio con doble pico (mercado matutino + tianguis/tarde), se mantiene la curva maestra sin cambios mayores por ser ya representativa de un patron mixto.",
+        "descripcion": "Comercio de barrio con doble pico (mercado matutino + tianguis/tarde) en San Jose Guadalupe Otzacatipan, se mantiene la curva maestra sin cambios mayores por ser ya representativa de un patron mixto.",
         "curva": {"centro": 14.0, "ancho": 4.0, "base": 0.10, "amplitud": 2.00}
       },
       "comercial_zona_19_periferia": {
-        "descripcion": "Comercio de paso/carretera con actividad mas extendida y menos pico definido.",
+        "descripcion": "Comercio de paso/carretera en San Nicolas Tolentino con actividad mas extendida y menos pico definido.",
         "curva": {"centro": 13.5, "ancho": 5.0, "base": 0.15, "amplitud": 1.60}
       },
       "publico_zona_1_centro": {
-        "descripcion": "Mayor concentracion de oficinas de gobierno y escuelas en el centro; se sube levemente la amplitud del pico institucional matutino-vespertino sin romper su forma.",
+        "descripcion": "Mayor concentracion de oficinas de gobierno y escuelas en el area central; se sube levemente la amplitud del pico institucional matutino-vespertino sin romper su forma.",
         "curva": {"centro": 12.5, "ancho": 2.0, "base": 0.05, "amplitud": 2.40}
       },
       "alumbrado_todas_zonas": {
@@ -143,7 +179,7 @@
       }
     },
     "modificadores_dia": {
-      "zona_1_centro_comercial": {"Habil": {"factor": 1.00, "desfase_horas": 0}, "Inhabil": {"factor": 0.55, "desfase_horas": 0}, "Festivo": {"factor": 0.15, "desfase_horas": 0}, "justificacion": "El comercio y gobierno del centro cierra casi por completo en festivo, mas que el promedio maestro (0.20)."},
+      "zona_1_centro_comercial": {"Habil": {"factor": 1.00, "desfase_horas": 0}, "Inhabil": {"factor": 0.55, "desfase_horas": 0}, "Festivo": {"factor": 0.15, "desfase_horas": 0}, "justificacion": "El comercio y gobierno del area central cierra casi por completo en festivo, mas que el promedio maestro (0.20)."},
       "zona_7_popular_residencial": {"Habil": {"factor": 1.00, "desfase_horas": 0}, "Inhabil": {"factor": 0.95, "desfase_horas": 1}, "Festivo": {"factor": 0.85, "desfase_horas": 2}, "justificacion": "En zonas populares la gente permanece mas tiempo en casa en dia inhabil/festivo (menor movilidad recreativa), por lo que el consumo residencial baja menos que el promedio maestro."},
       "zona_19_periferia_comercial": {"Habil": {"factor": 1.00, "desfase_horas": 0}, "Inhabil": {"factor": 0.80, "desfase_horas": 1}, "Festivo": {"factor": 0.55, "desfase_horas": 1}, "justificacion": "El comercio informal de paso en periferia opera casi todos los dias, con menor caida en inhabil/festivo que el comercio formal del centro."}
     },
