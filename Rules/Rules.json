@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "descripcion": "Reglas para la generación de las de carga",
+  "descripcion": "Reglas para la generación de los perfiles de carga",
   "categorias": {
     "Residencial": {
       "curva_base": [

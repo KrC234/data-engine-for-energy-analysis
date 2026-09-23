@@ -1,45 +1,45 @@
 {
-  "persona": "P1",
-  "responsable": "Mateo Jimenez Perez",
-  "zonas_asignadas": [1, 7, 13, 19],
-  "rol_secundario": "Lider de integracion y corrida maestra",
+  "persona": "P6",
+  "responsable": "Ramiro Vega Meza",
+  "zonas_asignadas": [6, 12, 18, 24],
+  "rol_secundario": "Reproducibilidad y documentacion: diff de corridas y guia de reproduccion",
   "semilla_raiz": "PENDIENTE_DEFINIR_EN_CORRIDA_MAESTRA",
   "zonas": [
     {
-      "id_zona": 1,
-      "nombre": "Atzinquilpa",
+      "id_zona": 6,
+      "nombre": "Toluca de Lerdo",
       "tipo_urbano": "CENTRO",
-      "superficie_km2": 2.140,
-      "factor_socioeconomico": 1.180,
-      "n_servicios_previstos": 0,
-      "notas": "Zona ancla de la propuesta. Mezcla tipo de servicios del centro."
+      "superficie_km2": 0,
+      "factor_socioeconomico": 1.739,
+      "n_servicios_previstos": 245,
+      "notas": "Referencia basada en 76 AGEB de Toluca de Lerdo: 223876 habitantes, 65993 viviendas y grado de rezago representativo Bajo. Superficie pendiente."
     },
     {
-      "id_zona": 7,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
+      "id_zona": 12,
+      "nombre": "San Pablo Autopan",
+      "tipo_urbano": "POPULAR",
       "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre segun RD-06 y definir caracter urbano distinto al de la zona 1."
+      "factor_socioeconomico": 0.954,
+      "n_servicios_previstos": 40,
+      "notas": "Referencia basada en 12 AGEB de San Pablo Autopan: 47932 habitantes, 10700 viviendas y grado de rezago representativo Alto. Superficie pendiente."
     },
     {
-      "id_zona": 13,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
+      "id_zona": 18,
+      "nombre": "San Cristobal Huichochitlan",
+      "tipo_urbano": "PERIFERIA",
       "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 1 y 7."
+      "factor_socioeconomico": 0.875,
+      "n_servicios_previstos": 35,
+      "notas": "Referencia basada en 12 AGEB de San Cristobal Huichochitlan: 42320 habitantes, 9442 viviendas y grado de rezago representativo Alto. Superficie pendiente."
     },
     {
-      "id_zona": 19,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
+      "id_zona": 24,
+      "nombre": "San Lorenzo Tepaltitlan",
+      "tipo_urbano": "RESIDENCIAL_MEDIA",
       "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 1, 7 y 13."
+      "factor_socioeconomico": 1.657,
+      "n_servicios_previstos": 36,
+      "notas": "Referencia basada en 11 AGEB de San Lorenzo Tepaltitlan: 35292 habitantes, 9803 viviendas y grado de rezago representativo Bajo. Superficie pendiente."
     }
   ],
   "mejoras_reglas_propuestas": {
