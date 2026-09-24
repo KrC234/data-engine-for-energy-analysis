@@ -1,9 +1,8 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
 .venv/
-Inserciones/
-Conexión/
-Test/
-Generation/Resultados/
-
-Main.py
-
-Generation/Perfil_de_carga/__pycache__
+venv/

@@ -1,0 +1,361 @@
+version: "2.0.0"
+
+
+# ==========================================================
+# TERRITORIO
+# ==========================================================
+
+territory:
+
+  source_file: "config/data/zonas_toluca.csv"
+
+  services_distribution:
+    method: "weighted_by_housing"
+    field: "viviendas_habitadas"
+
+  socioeconomic_factor:
+    field: "factor_socioeconomico"
+    apply_to_consumption: true
+    apply_to_fraud_probability: false
+
+  urban_type:
+    method: "hsd_factor_classification"
+
+    thresholds:
+      RESIDENCIAL_ALTA:
+        min: 1.75
+
+      RESIDENCIAL_MEDIA:
+        min: 1.50
+        max: 1.749
+
+      MIXTA:
+        min: 1.20
+        max: 1.499
+
+      POPULAR:
+        min: 0.90
+        max: 1.199
+
+      PERIFERIA:
+        min: 0.50
+        max: 0.899
+
+
+# ==========================================================
+# PADRON
+# ==========================================================
+
+services:
+
+  total: 5000
+
+  category_distribution:
+
+    RESIDENCIAL: 0.780
+    COMERCIAL: 0.071
+    PUBLICO: 0.030
+    SERVICIO: 0.014
+    ALUMBRADO: 0.068
+    MOVILIDAD: 0.037
+
+  solar_probability:
+
+    RESIDENCIAL: 0.08
+    COMERCIAL: 0.12
+    PUBLICO: 0.15
+    SERVICIO: 0.05
+    ALUMBRADO: 0.00
+    MOVILIDAD: 0.00
+
+
+# ==========================================================
+# TIPOS DE SERVICIO
+# ==========================================================
+
+service_types:
+
+  VIV_UNIF:
+    name: "Vivienda unifamiliar"
+    category: "RESIDENCIAL"
+    base_kwh_h: 0.350
+    dispersion: 0.42
+    temperature_sensitivity: 0.045
+
+  VIV_DEPTO:
+    name: "Departamento"
+    category: "RESIDENCIAL"
+    base_kwh_h: 0.240
+    dispersion: 0.38
+    temperature_sensitivity: 0.038
+
+  VIV_SOCIAL:
+    name: "Vivienda de interes social"
+    category: "RESIDENCIAL"
+    base_kwh_h: 0.190
+    dispersion: 0.35
+    temperature_sensitivity: 0.030
+
+  VIV_RESID:
+    name: "Vivienda de consumo alto"
+    category: "RESIDENCIAL"
+    base_kwh_h: 0.980
+    dispersion: 0.55
+    temperature_sensitivity: 0.075
+
+  COM_LOCAL:
+    name: "Local comercial de barrio"
+    category: "COMERCIAL"
+    base_kwh_h: 1.100
+    dispersion: 0.48
+    temperature_sensitivity: 0.040
+
+  MERCADO:
+    name: "Mercado publico municipal"
+    category: "PUBLICO"
+    base_kwh_h: 18.500
+    dispersion: 0.30
+    temperature_sensitivity: 0.055
+
+  ESCUELA:
+    name: "Escuela publica"
+    category: "PUBLICO"
+    base_kwh_h: 6.400
+    dispersion: 0.28
+    temperature_sensitivity: 0.035
+
+  CLINICA:
+    name: "Centro de salud"
+    category: "PUBLICO"
+    base_kwh_h: 22.000
+    dispersion: 0.25
+    temperature_sensitivity: 0.050
+
+  HOSPITAL:
+    name: "Hospital"
+    category: "PUBLICO"
+    base_kwh_h: 85.000
+    dispersion: 0.20
+    temperature_sensitivity: 0.048
+
+  EDIF_GOB:
+    name: "Edificio gubernamental"
+    category: "PUBLICO"
+    base_kwh_h: 14.200
+    dispersion: 0.32
+    temperature_sensitivity: 0.060
+
+  BIBLIOTECA:
+    name: "Biblioteca publica"
+    category: "PUBLICO"
+    base_kwh_h: 4.100
+    dispersion: 0.30
+    temperature_sensitivity: 0.042
+
+  CTRO_CULT:
+    name: "Centro cultural"
+    category: "PUBLICO"
+    base_kwh_h: 5.300
+    dispersion: 0.30
+    temperature_sensitivity: 0.040
+
+  CTRO_DEP:
+    name: "Centro deportivo"
+    category: "PUBLICO"
+    base_kwh_h: 11.800
+    dispersion: 0.35
+    temperature_sensitivity: 0.030
+
+  PARQUE:
+    name: "Parque publico iluminado"
+    category: "PUBLICO"
+    base_kwh_h: 2.700
+    dispersion: 0.25
+    temperature_sensitivity: 0.005
+
+  POZO_AGUA:
+    name: "Pozo de agua potable"
+    category: "SERVICIO"
+    base_kwh_h: 42.000
+    dispersion: 0.20
+    temperature_sensitivity: 0.010
+
+  BOMBEO:
+    name: "Planta de rebombeo"
+    category: "SERVICIO"
+    base_kwh_h: 58.000
+    dispersion: 0.18
+    temperature_sensitivity: 0.008
+
+  ALUMB_PUB:
+    name: "Circuito de alumbrado publico"
+    category: "ALUMBRADO"
+    base_kwh_h: 9.600
+    dispersion: 0.22
+    temperature_sensitivity: 0.000
+
+  SEMAFORO:
+    name: "Nodo de semaforizacion"
+    category: "MOVILIDAD"
+    base_kwh_h: 0.420
+    dispersion: 0.15
+    temperature_sensitivity: 0.000
+
+
+# ==========================================================
+# CONSUMO
+# ==========================================================
+
+consumption:
+
+  formula:
+    base: true
+    hourly_profile: true
+    socioeconomic_factor: true
+    seasonal_factor: true
+    random_component: true
+
+  random_distribution:
+    type: "normal"
+    mean: 0.0
+    truncate_sigma: 2.5
+
+  minimum_kwh: 0.0
+
+
+# ==========================================================
+# MEDIDORES
+# ==========================================================
+
+meters:
+
+  brands:
+    MEDISUR: 0.35
+    KRONOS: 0.35
+    NOVAMET: 0.30
+
+  base_link_quality:
+    min: 75
+    max: 99
+
+  link_quality_by_zone: true
+
+  multipliers:
+    1: 0.94
+    20: 0.03
+    40: 0.02
+    80: 0.01
+
+  replacements:
+    enabled: true
+    total: 260
+
+
+# ==========================================================
+# CALENDARIO / TEMPERATURA
+# ==========================================================
+
+calendar:
+
+  day_types:
+    workday: "H"
+    saturday: "S"
+    sunday_or_holiday: "D"
+
+  temperature:
+
+    january:
+      min_c: [3.0, 8.0]
+      max_c: [18.0, 23.0]
+
+    february:
+      min_c: [5.0, 10.0]
+      max_c: [20.0, 26.0]
+
+    march:
+      min_c: [8.0, 14.0]
+      max_c: [23.0, 30.0]
+
+  seasonal_factor:
+
+    january: 1.08
+    february: 1.03
+    march: 0.98
+
+
+# ==========================================================
+# ANOMALIAS
+# ==========================================================
+
+events:
+
+  enabled: true
+
+  PICO_DEMANDA:
+    effect: "INCREMENTO"
+    affects_meter_counter: true
+    rate_month: 0.060
+    duration_hours: [1, 3]
+    intensity: [2.5, 6.0]
+    detection_probability: 0.95
+
+  CONSUMO_ANOMALO:
+    effect: "INCREMENTO"
+    affects_meter_counter: true
+    rate_month: 0.040
+    duration_hours: [24, 168]
+    intensity: [1.4, 2.2]
+    detection_probability: 0.70
+
+  MANIPULACION:
+    effect: "REDUCCION"
+    affects_meter_counter: true
+    rate_month: 0.008
+    duration_hours: [168, 720]
+    intensity: [0.2, 0.6]
+    detection_probability: 0.35
+
+  FALLA_MEDIDOR:
+    effect: "CONGELAMIENTO"
+    affects_meter_counter: true
+    rate_month: 0.010
+    duration_hours: [12, 336]
+    intensity: null
+    detection_probability: 0.40
+
+  PERDIDA_COMUNICACION:
+    effect: "NULIFICACION"
+    affects_meter_counter: false
+    rate_month: 0.900
+    duration_hours: [1, 24]
+    intensity: null
+    detection_probability: 0.98
+
+  SOBRECARGA:
+    effect: "INCREMENTO"
+    affects_meter_counter: true
+    rate_month: 0.015
+    duration_hours: [1, 6]
+    intensity: [1.8, 3.0]
+    detection_probability: 0.90
+
+  MANTENIMIENTO:
+    effect: "REDUCCION"
+    affects_meter_counter: false
+    rate_month: 0.020
+    duration_hours: [2, 8]
+    intensity: [0.0, 0.25]
+    detection_probability: 1.00
+
+
+# ==========================================================
+# VIGILANCIA
+# ==========================================================
+
+monitoring:
+
+  alert_delay_hours:
+    min: 1
+    max: 12
+
+  false_alarm_rate_month_per_meter: 0.004
