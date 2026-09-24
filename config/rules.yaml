@@ -1,55 +1,38 @@
-version: "2.0.0"
+# ============================================================
+# REGLAS DE GENERACION
+# HyperDataSynthetic
+#
+# Contiene solamente reglas utilizadas directamente por
+# los generadores Python.
+#
+# Los catalogos de zonas, tarifas, tipos de servicio,
+# perfiles horarios y tipos de evento viven en PostgreSQL.
+# ============================================================
 
 
-# ==========================================================
-# TERRITORIO
-# ==========================================================
-
-territory:
-
-  source_file: "config/data/zonas_toluca.csv"
-
-  services_distribution:
-    method: "weighted_by_housing"
-    field: "viviendas_habitadas"
-
-  socioeconomic_factor:
-    field: "factor_socioeconomico"
-    apply_to_consumption: true
-    apply_to_fraud_probability: false
-
-  urban_type:
-    method: "hsd_factor_classification"
-
-    thresholds:
-      RESIDENCIAL_ALTA:
-        min: 1.75
-
-      RESIDENCIAL_MEDIA:
-        min: 1.50
-        max: 1.749
-
-      MIXTA:
-        min: 1.20
-        max: 1.499
-
-      POPULAR:
-        min: 0.90
-        max: 1.199
-
-      PERIFERIA:
-        min: 0.50
-        max: 0.899
-
-
-# ==========================================================
-# PADRON
-# ==========================================================
+# ============================================================
+# 1. DISTRIBUCION DE SERVICIOS
+# ============================================================
 
 services:
 
-  total: 5000
+  # Los 5,000 servicios se distribuyen entre las zonas según
+  # el número de viviendas habitadas de energia.zona.
+  #
+  # Una zona con más viviendas recibe más servicios sintéticos.
+  use_housing_weights: true
 
+
+  # Distribución del padrón por categoría.
+  #
+  # La suma debe ser exactamente 1.0.
+  #
+  # RESIDENCIAL: 78.0% de los servicios
+  # COMERCIAL:    7.1%
+  # PUBLICO:      3.0%
+  # SERVICIO:     1.4%, por ejemplo pozos y bombeo
+  # ALUMBRADO:    6.8%
+  # MOVILIDAD:    3.7%, por ejemplo semáforos
   category_distribution:
 
     RESIDENCIAL: 0.780
@@ -59,6 +42,11 @@ services:
     ALUMBRADO: 0.068
     MOVILIDAD: 0.037
 
+
+  # Probabilidad de que un servicio tenga generación solar.
+  #
+  # 0.08 significa una probabilidad del 8%.
+  # Los circuitos de alumbrado y semáforos quedan en cero.
   solar_probability:
 
     RESIDENCIAL: 0.08
@@ -69,213 +57,137 @@ services:
     MOVILIDAD: 0.00
 
 
-# ==========================================================
-# TIPOS DE SERVICIO
-# ==========================================================
+  # Ocupación sintética para servicios residenciales.
+  #
+  # Cada vivienda tendrá entre 1 y 7 ocupantes.
+  residential_occupancy:
 
-service_types:
-
-  VIV_UNIF:
-    name: "Vivienda unifamiliar"
-    category: "RESIDENCIAL"
-    base_kwh_h: 0.350
-    dispersion: 0.42
-    temperature_sensitivity: 0.045
-
-  VIV_DEPTO:
-    name: "Departamento"
-    category: "RESIDENCIAL"
-    base_kwh_h: 0.240
-    dispersion: 0.38
-    temperature_sensitivity: 0.038
-
-  VIV_SOCIAL:
-    name: "Vivienda de interes social"
-    category: "RESIDENCIAL"
-    base_kwh_h: 0.190
-    dispersion: 0.35
-    temperature_sensitivity: 0.030
-
-  VIV_RESID:
-    name: "Vivienda de consumo alto"
-    category: "RESIDENCIAL"
-    base_kwh_h: 0.980
-    dispersion: 0.55
-    temperature_sensitivity: 0.075
-
-  COM_LOCAL:
-    name: "Local comercial de barrio"
-    category: "COMERCIAL"
-    base_kwh_h: 1.100
-    dispersion: 0.48
-    temperature_sensitivity: 0.040
-
-  MERCADO:
-    name: "Mercado publico municipal"
-    category: "PUBLICO"
-    base_kwh_h: 18.500
-    dispersion: 0.30
-    temperature_sensitivity: 0.055
-
-  ESCUELA:
-    name: "Escuela publica"
-    category: "PUBLICO"
-    base_kwh_h: 6.400
-    dispersion: 0.28
-    temperature_sensitivity: 0.035
-
-  CLINICA:
-    name: "Centro de salud"
-    category: "PUBLICO"
-    base_kwh_h: 22.000
-    dispersion: 0.25
-    temperature_sensitivity: 0.050
-
-  HOSPITAL:
-    name: "Hospital"
-    category: "PUBLICO"
-    base_kwh_h: 85.000
-    dispersion: 0.20
-    temperature_sensitivity: 0.048
-
-  EDIF_GOB:
-    name: "Edificio gubernamental"
-    category: "PUBLICO"
-    base_kwh_h: 14.200
-    dispersion: 0.32
-    temperature_sensitivity: 0.060
-
-  BIBLIOTECA:
-    name: "Biblioteca publica"
-    category: "PUBLICO"
-    base_kwh_h: 4.100
-    dispersion: 0.30
-    temperature_sensitivity: 0.042
-
-  CTRO_CULT:
-    name: "Centro cultural"
-    category: "PUBLICO"
-    base_kwh_h: 5.300
-    dispersion: 0.30
-    temperature_sensitivity: 0.040
-
-  CTRO_DEP:
-    name: "Centro deportivo"
-    category: "PUBLICO"
-    base_kwh_h: 11.800
-    dispersion: 0.35
-    temperature_sensitivity: 0.030
-
-  PARQUE:
-    name: "Parque publico iluminado"
-    category: "PUBLICO"
-    base_kwh_h: 2.700
-    dispersion: 0.25
-    temperature_sensitivity: 0.005
-
-  POZO_AGUA:
-    name: "Pozo de agua potable"
-    category: "SERVICIO"
-    base_kwh_h: 42.000
-    dispersion: 0.20
-    temperature_sensitivity: 0.010
-
-  BOMBEO:
-    name: "Planta de rebombeo"
-    category: "SERVICIO"
-    base_kwh_h: 58.000
-    dispersion: 0.18
-    temperature_sensitivity: 0.008
-
-  ALUMB_PUB:
-    name: "Circuito de alumbrado publico"
-    category: "ALUMBRADO"
-    base_kwh_h: 9.600
-    dispersion: 0.22
-    temperature_sensitivity: 0.000
-
-  SEMAFORO:
-    name: "Nodo de semaforizacion"
-    category: "MOVILIDAD"
-    base_kwh_h: 0.420
-    dispersion: 0.15
-    temperature_sensitivity: 0.000
+    min: 1
+    max: 7
 
 
-# ==========================================================
-# CONSUMO
-# ==========================================================
+  # Carga contratada según categoría, expresada en kW.
+  #
+  # Esta carga se usa posteriormente para detectar eventos
+  # de sobrecarga.
+  contracted_load_kw:
 
-consumption:
+    RESIDENCIAL:
+      min: 1.5
+      max: 12.0
 
-  formula:
-    base: true
-    hourly_profile: true
-    socioeconomic_factor: true
-    seasonal_factor: true
-    random_component: true
+    COMERCIAL:
+      min: 5.0
+      max: 60.0
 
-  random_distribution:
-    type: "normal"
-    mean: 0.0
-    truncate_sigma: 2.5
+    PUBLICO:
+      min: 15.0
+      max: 250.0
 
-  minimum_kwh: 0.0
+    SERVICIO:
+      min: 50.0
+      max: 350.0
+
+    ALUMBRADO:
+      min: 10.0
+      max: 120.0
+
+    MOVILIDAD:
+      min: 0.5
+      max: 5.0
 
 
-# ==========================================================
-# MEDIDORES
-# ==========================================================
+# ============================================================
+# 2. MEDIDORES
+# ============================================================
 
 meters:
 
+  # Distribución de marcas sintéticas.
+  #
+  # La suma debe ser exactamente 1.0.
+  # Estas marcas no representan fabricantes reales.
   brands:
+
     MEDISUR: 0.35
     KRONOS: 0.35
     NOVAMET: 0.30
 
-  base_link_quality:
+
+  # Calidad de comunicación del medidor.
+  #
+  # El esquema de PostgreSQL permite valores entre 50 y 100.
+  # Para el escenario normal generaremos valores entre 75 y 99.
+  #
+  # Un valor de 95 representa aproximadamente una calidad
+  # de enlace superior a un medidor con valor 75.
+  link_quality:
+
     min: 75
     max: 99
 
-  link_quality_by_zone: true
 
+  # El factor socioeconómico de la zona también se utilizará
+  # para ajustar ligeramente la calidad del enlace.
+  #
+  # true significa que las zonas clasificadas como periféricas
+  # pueden obtener valores de enlace ligeramente menores.
+  adjust_link_quality_by_zone: true
+
+
+  # Distribución de multiplicadores.
+  #
+  # La mayoría de los servicios usa multiplicador 1.
+  # Los valores 20, 40 y 80 se reservan principalmente para
+  # servicios de mayor carga.
   multipliers:
+
     1: 0.94
     20: 0.03
     40: 0.02
     80: 0.01
 
-  replacements:
-    enabled: true
-    total: 260
 
-
-# ==========================================================
-# CALENDARIO / TEMPERATURA
-# ==========================================================
+# ============================================================
+# 3. CALENDARIO Y TEMPERATURA
+# ============================================================
 
 calendar:
 
-  day_types:
-    workday: "H"
-    saturday: "S"
-    sunday_or_holiday: "D"
-
+  # Rango de temperatura mínima y máxima para cada mes.
+  #
+  # Estos valores son parámetros del escenario sintético.
+  # El generador seleccionará un valor dentro del rango.
   temperature:
 
     january:
+
+      # Temperatura mínima diaria entre 3 y 8 grados Celsius.
       min_c: [3.0, 8.0]
+
+      # Temperatura máxima diaria entre 18 y 23 grados Celsius.
       max_c: [18.0, 23.0]
 
+
     february:
+
+      # Febrero presenta un aumento moderado de temperatura.
       min_c: [5.0, 10.0]
       max_c: [20.0, 26.0]
 
+
     march:
+
+      # Marzo presenta las temperaturas más altas del trimestre.
       min_c: [8.0, 14.0]
       max_c: [23.0, 30.0]
 
+
+  # Factor que modifica el consumo general según el mes.
+  #
+  # 1.08 significa que enero incrementa el consumo base 8%.
+  # 1.03 significa que febrero incrementa el consumo base 3%.
+  # 0.98 significa que marzo reduce el consumo base 2%.
   seasonal_factor:
 
     january: 1.08
@@ -283,79 +195,69 @@ calendar:
     march: 0.98
 
 
-# ==========================================================
-# ANOMALIAS
-# ==========================================================
+# ============================================================
+# 4. VARIACION DEL CONSUMO
+# ============================================================
 
-events:
+consumption:
 
-  enabled: true
-
-  PICO_DEMANDA:
-    effect: "INCREMENTO"
-    affects_meter_counter: true
-    rate_month: 0.060
-    duration_hours: [1, 3]
-    intensity: [2.5, 6.0]
-    detection_probability: 0.95
-
-  CONSUMO_ANOMALO:
-    effect: "INCREMENTO"
-    affects_meter_counter: true
-    rate_month: 0.040
-    duration_hours: [24, 168]
-    intensity: [1.4, 2.2]
-    detection_probability: 0.70
-
-  MANIPULACION:
-    effect: "REDUCCION"
-    affects_meter_counter: true
-    rate_month: 0.008
-    duration_hours: [168, 720]
-    intensity: [0.2, 0.6]
-    detection_probability: 0.35
-
-  FALLA_MEDIDOR:
-    effect: "CONGELAMIENTO"
-    affects_meter_counter: true
-    rate_month: 0.010
-    duration_hours: [12, 336]
-    intensity: null
-    detection_probability: 0.40
-
-  PERDIDA_COMUNICACION:
-    effect: "NULIFICACION"
-    affects_meter_counter: false
-    rate_month: 0.900
-    duration_hours: [1, 24]
-    intensity: null
-    detection_probability: 0.98
-
-  SOBRECARGA:
-    effect: "INCREMENTO"
-    affects_meter_counter: true
-    rate_month: 0.015
-    duration_hours: [1, 6]
-    intensity: [1.8, 3.0]
-    detection_probability: 0.90
-
-  MANTENIMIENTO:
-    effect: "REDUCCION"
-    affects_meter_counter: false
-    rate_month: 0.020
-    duration_hours: [2, 8]
-    intensity: [0.0, 0.25]
-    detection_probability: 1.00
+  # Límite inferior permitido.
+  # Ninguna lectura real puede ser negativa.
+  minimum_kwh: 0.0
 
 
-# ==========================================================
-# VIGILANCIA
-# ==========================================================
+  # Limita el ruido aleatorio alrededor del consumo esperado.
+  #
+  # El factor se seleccionará entre 0.90 y 1.10.
+  #
+  # Ejemplo:
+  # consumo esperado = 1.000 kWh
+  #
+  # consumo generado mínimo aproximado = 0.900 kWh
+  # consumo generado máximo aproximado = 1.100 kWh
+  random_factor:
 
-monitoring:
+    min: 0.90
+    max: 1.10
 
-  alert_delay_hours:
-    min: 1
-    max: 12
 
-  false_alarm_rate_month_per_meter: 0.004
+  # Determina si el factor socioeconómico de energia.zona
+  # modifica el consumo.
+  #
+  # Ejemplo:
+  # consumo base       = 0.350
+  # factor de zona     = 1.500
+  #
+  # consumo ajustado   = 0.350 x 1.500
+  use_socioeconomic_factor: true
+
+
+  # Determina si el factor mensual almacenado en calendario
+  # modifica el consumo.
+  use_seasonal_factor: true
+
+
+  # Determina si se utiliza el perfil horario almacenado en
+  # energia.perfil_carga_horaria.
+  use_hourly_profile: true
+
+
+# ============================================================
+# 5. GENERACION SOLAR
+# ============================================================
+
+solar:
+
+  # Horas en las que se aplica una reducción de consumo neto
+  # a los servicios que tienen generación solar.
+  start_hour: 9
+  end_hour: 17
+
+
+  # Reducción del consumo durante las horas solares.
+  #
+  # El valor se seleccionará entre 15% y 45%.
+  reduction:
+
+    min: 0.15
+    max: 0.45
