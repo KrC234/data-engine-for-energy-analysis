@@ -1,34 +1,84 @@
 {
-    "dispositivos": [   
+  "marcas": {
+    "Mateo Systems": {
+      "prefijo": "MJP",
+      "lotes": ["21A", "22F", "25C", "26F"],
+      "modelos_por_tension": {
+        "BAJA_TENSION": [
+          {
+            "modelo": "MJ4",
+            "factor_comunicacion": 0.96
+          },
+          {
+            "modelo": "N77",
+            "factor_comunicacion": 0.91
+          }
+        ],
+        "MEDIA_TENSION": [
+          {
+            "modelo": "M45",
+            "factor_comunicacion": 0.94
+          }
+        ],
+        "ALTA_TENSION": [
+          {
+            "modelo": "JP4",
+            "factor_comunicacion": 0.985
+          }
+        ]
+      }
+    },
+    "Medisur Sistemas": {
+      "prefijo": "MDS",
+      "lotes": ["22E", "22A", "23C", "25D"],
+      "modelos_por_tension": {
+        "BAJA_TENSION": [
+          {
+            "modelo": "M9C",
+            "factor_comunicacion": 0.98
+          }
+        ],
+        "MEDIA_TENSION": [
+          {
+            "modelo": "M7B",
+            "factor_comunicacion": 0.95
+          }
+        ],
+        "ALTA_TENSION": [
+          {
+            "modelo": "MRX",
+            "factor_comunicacion": 0.99
+          }
+        ]
+      }
+    }
+  }
+,
+    "fechas": [
         {
-            "marca": "Medisur Sistemas", 
-            "prefijo": "MDS",
-            "modelos": ["M9C", "M7B", "MRX", "M77"],
-            "lotes": ["22E","22A","23C","25D"]
+            "dia": 1,
+            "mes": 1,
+            "año": 2019
         },
         {
-            "marca": "Kronos Energía", 
-            "prefijo": "KRE",
-            "modelos": ["X2A", "X2B", "X45", "X1X"],
-            "lotes": ["19E","24A","25B","26F"]
-        }, 
-        {
-            "marca": "Mateo Systems", 
-            "prefijo": "MJP",
-            "modelos": ["MJ4", "M45", "JP4", "N77"],
-            "lotes": ["21A","22F","25C","26F"]
+            "dia": 31,
+            "mes": 12,
+            "año": 2022
         }
     ],
-    "fechas" :[
-        {
-            "dia":1,
-            "mes":1,
-            "año":2019
-        },
-        {
-            "dia":31,
-            "mes":12,
-            "año":2022 
-        }
-    ]
+    "MAPEO_TARIFA":{
+        "1": "BAJA_TENSION",
+        "1C": "BAJA_TENSION",
+        "DAC": "MEDIA_TENSION",
+        "PDBT": "BAJA_TENSION",
+        "GDBT": "BAJA_TENSION",
+        "DIST": "MEDIA_TENSION",
+        "DIT": "ALTA_TENSION"
+    },
+    "MULTIPLICADORES":{
+        "BAJA_TENSION": 1.0,
+        "MEDIA_TENSION": 10.0,
+        "ALTA_TENSION": 100.0
+    }
+
 }
