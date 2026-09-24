@@ -1,172 +1,533 @@
-# data-engine-for-energy-analysis
+======================================================================
+⚡ HYPERDATASYNTHETIC
+======================================================================
 
-Módulo de generación de datos sintéticos del proyecto HyperDataSynthetic (HSD): un sistema de monitoreo de consumo energético en una ciudad inteligente. El módulo produce los registros del escenario simulado mediante reglas de comportamiento y semillas, de forma que cada corrida sea reproducible y los datos resultantes se inserten en una base PostgreSQL con TimescaleDB.
+Motor de generación de datos hiper-sintéticos para simular el consumo
+energético de un programa de medición inteligente en el municipio de
+Toluca, Estado de México.
 
-## Objetivo
+El proyecto genera información mediante reglas explícitas y
+reproducibles, sin utilizar lecturas eléctricas individuales reales.
 
-Llevar a cabo la generación de datos sintéticos y la inserción de registros en la base de datos, mediante reglas de comportamiento y el uso de semillas para generar datos lo más cercanos a la realidad.
 
-## Escenario
+📌 CONTENIDO
+======================================================================
 
-El Valle de Nexpahuacán es una ciudad ficticia de alrededor de 400.000 habitantes. El municipio, en conjunto con la empresa suministradora de electricidad, puso en marcha un programa piloto de medición inteligente: 5.000 puntos de consumo con medidores capaces de transmitir sus lecturas automáticamente, hora tras hora, hacia un centro de monitoreo.
+  01. Objetivo
+  02. Principio de Hyper-Synthetic Data
+  03. Arquitectura actual
+  04. Configuración
+  05. Base de datos
+  06. Generadores
+  07. Modelo de datos
+  08. Flujo de generación
+  09. Generación del consumo
+  10. Consumo real y consumo reportado
+  11. Generación por lotes
+  12. Configuración de PostgreSQL
+  13. Preparación del entorno
+  14. Creación inicial de la base
+  15. Comprobación desde Python
+  16. Validación de catálogos
+  17. Estado actual
+  18. Próximo paso
 
-El sistema no monitorea toda la ciudad: monitorea una muestra representativa. De los 5.000 puntos, cerca de cuatro de cada cinco son viviendas particulares. El resto se reparte entre comercios pequeños, edificios públicos como escuelas y clínicas, infraestructura de servicios y elementos de vía pública.
 
-## Concepto central: dos energías por lectura
+======================================================================
+🎯 01. OBJETIVO
+======================================================================
 
-Cada lectura horaria almacena dos cantidades de energía, no una:
+Construir una base de datos PostgreSQL con información sintética
+relacionada con:
 
-- **Energía reportada:** el número que salió del aparato y llegó al centro de monitoreo, tal cual, sin corrección alguna. Es lo único que un sistema real conocería.
-- **Energía real:** la energía que efectivamente circuló durante esa hora, con independencia de si el medidor la reportó bien, la reportó mal o no la reportó en absoluto. Es la verdad del mundo simulado.
+  • Zonas de Toluca
+  • Servicios eléctricos
+  • Medidores inteligentes
+  • Calendario y temperatura
+  • Perfiles horarios de consumo
+  • Eventos y anomalías
+  • Lecturas energéticas
+  • Alertas
+  • Periodos de facturación
 
-En condiciones normales ambas cantidades coinciden. Cuando ocurre una anomalía se separan, y la forma en que se separan identifica el tipo de anomalía sin ambigüedad.
 
-Casos que el modelo distingue:
+📊 Escenario principal
 
-- Operación normal: la curva de carga se comporta como se espera y ambos registros coinciden.
-- Pérdida de comunicación: la energía real se consumió, mientras que la reportada mantiene valores nulos.
-- Medidor congelado o averiado: se consume la energía normal, mientras el medidor reporta un cero constante, hora tras hora.
-- Manipulación (fraude): se consume una gran cantidad de energía mientras se reporta una fracción del valor real.
-- Pico de demanda: valor por arriba de lo habitual, con ambos registros iguales.
-- Consumo legítimamente bajo: valor bajo en periodos esperados.
+  Servicios sintéticos ............... 5,000
+  Medidores activos .................. 5,000
+  Periodo ............................ 90 días
+  Intervalo de lectura ............... 1 hora
+  Lecturas por medidor/día ........... 24
 
-## Curva de carga y modificadores
 
-El concepto físico que sostiene toda la generación es la curva de carga: la forma en que el consumo de un punto varía a lo largo del día.
+📈 Volumen esperado
 
-Una vivienda consume poco durante la madrugada, algo más por la mañana y alcanza su máximo por la noche. Un mercado municipal presenta la forma opuesta: arranca temprano, culmina a media mañana y prácticamente se apaga de noche. Un circuito de alumbrado público invierte por completo el patrón: consume solo cuando no hay luz solar.
+  5,000 medidores
+     ×
+     90 días
+     ×
+     24 lecturas
+     │
+     ▼
+  10,800,000 lecturas
 
-Ese comportamiento obliga a monitorear por hora y a tratar la curva característica como un parámetro almacenado del sistema. Tres modificadores adicionales se aplican de manera multiplicativa sobre la curva: el tipo de día, el carácter socioeconómico de la zona y la estacionalidad.
 
-Las reglas viven en `Rules/Rules.json`, parametrizadas y versionadas. Cada categoría de consumo declara una curva base, una o más gaussianas definidas por centro, ancho, base y amplitud, y modificadores por tipo de día (Hábil, Inhábil, Festivo) que desplazan el pico y escalan la amplitud.
+======================================================================
+🧬 02. PRINCIPIO DE HYPER-SYNTHETIC DATA
+======================================================================
 
-## Modelo de datos
+Los datos NO se copian de medidores eléctricos reales.
 
-La base propone 13 tablas clasificadas por el uso de los datos en el sistema:
+Cada registro se construye utilizando reglas conocidas:
 
-| Familia | Qué representa | Tablas | Filas esperadas |
-|---|---|---|---|
-| Catálogos | Conjuntos cerrados de categorías que el sistema reconoce | zona, tarifa, tipo_servicio, tipo_evento | 56 |
-| Parámetros | Reglas con las que se generó e interpreta el resto de la información | perfil_carga_horaria, calendario, corrida_generacion | 1.388 |
-| Maestras | Inventario de lo que existe físicamente en la ciudad | servicio, medidor | 10.260 |
-| Hechos | Lo que ocurre en el tiempo: mediciones, anomalías, alertas, recibos | lectura, evento, alerta, periodo_facturacion | ≈10.844.700 |
+  Configuración
+       +
+  Catálogos
+       +
+  Perfiles horarios
+       +
+  Factores territoriales
+       +
+  Variación pseudoaleatoria controlada
+       │
+       ▼
+  Datos hiper-sintéticos
 
-Total: ≈10.856.404 filas. Las lecturas concentran más del 99% del volumen.
 
-### Parámetros del escenario
+🔁 REPRODUCIBILIDAD
 
-- Puntos de consumo: 5.000.
-- Zonas de la ciudad: 24.
-- Tipos de punto de consumo: 18.
-- Clasificaciones tarifarias: 7.
-- Frecuencia de lectura: una por hora, 24 al día.
-- Periodo de observación: 90 días.
-- Ciclo de facturación: mensual para todos los servicios.
-- Tipos de anomalía: 7.
+La misma semilla + las mismas reglas + la misma configuración
+deben producir el mismo resultado.
 
-### Tipos de evento
 
-Pico de demanda, consumo anómalo sostenido, manipulación del medidor (fraude), falla del medidor, pérdida de comunicación, sobrecarga y mantenimiento programado. Los eventos se sortean antes de generar las lecturas, según las tasas declaradas en las reglas. Las alertas incluyen omisiones y falsas alarmas.
+======================================================================
+📂 03. ARQUITECTURA ACTUAL
+======================================================================
 
-### Encadenamiento de claves
-
-zona 1:N servicio 1:N medidor 1:N lectura, con clave natural de lectura (id_medidor, timestamp) y particionado mensual. Las tarifas solo clasifican, no se modelan como dinero.
-
-## Canalización de ocho etapas
-
-La generación se ejecuta como una canalización de ocho etapas; cada una consume lo producido por las anteriores:
-
-1. Registro de la corrida: semilla, versión de reglas, huella de configuración y alcance temporal.
-2. Catálogos: zonas, tarifas, tipos de servicio y tipos de evento.
-3. Parámetros temporales: calendario de 90 días con tipo de día y temperatura; perfiles de carga horaria.
-4. Padrón: puntos de consumo con zona, tipo y tarifa; medidores con marca, instalación y calidad de comunicación.
-5. Anomalías: sucesos con tipo, medidor, inicio, fin e intensidad, sorteados según las tasas declaradas.
-6. Lecturas: una fila por medidor y hora, con energía real y energía reportada. Se escribe por lotes para reanudar la carga si algo se interrumpe y para no sostener diez millones de filas en memoria.
-7. Vigilancia: alertas emitidas, incluidas omisiones y falsas alarmas.
-8. Facturación: un recibo mensual por punto de consumo, con contador inicial y final.
-
-## Estructura del repositorio
-
-```
 data-engine-for-energy-analysis/
-├── README.md
-├── .gitignore
+│
+├── config/
+│   ├── config_loader.py
+│   ├── generation.yaml
+│   ├── rules.yaml
+│   └── settings.py
+│
+├── database/
+│   │
+│   ├── sql/
+│   │   ├── 01_esquema.sql
+│   │   └── 02_catalogos.sql
+│   │
+│   ├── connection.py
+│   ├── database_check.py
+│   └── partition_manager.py
+│
 ├── Generation/
-│   └── Perfil_de_carga/
-│       └── Profile_Gen.py      # etapa 3: perfiles de carga horaria
-└── Rules/
-    └── Rules.json              # reglas versionadas de generación
-```
+│   ├── Dispositivos_Gen.py
+│   ├── Profile_Gen.py
+│   └── Servicios_Gen.py
+│
+├── calculos/
+│
+├── .env
+├── .gitignore
+├── main.py
+├── README.md
+└── requirements.txt
 
-El .gitignore mantiene fuera del repositorio lo que no debe versionarse: entornos virtuales, scripts de inserción con credenciales, catálogos de prueba, resultados de corridas y el punto de entrada principal. Las credenciales de conexión a la base no se suben jamás.
 
-## Cómo usar
+======================================================================
+⚙️ 04. CONFIGURACIÓN
+======================================================================
 
-### Requisitos
+📁 config/
 
-- Python 3.10 o superior, con numpy; pandas se incorpora en las etapas de lecturas.
-- PostgreSQL 16 con la extensión TimescaleDB para la base de destino.
-- Git para el control de versiones.
+Contiene la configuración general del proyecto.
 
-### Pasos
 
-1. Clonar el repositorio y crear el entorno virtual.
-2. Instalar las dependencias del generador: numpy, pandas y el driver de PostgreSQL.
-3. Preparar las entradas: `Rules/Rules.json` con las reglas de la corrida y el catálogo de tipos de servicio del escenario.
-4. Generar los perfiles de carga horaria ejecutando `Generation/Perfil_de_carga/Profile_Gen.py`; la salida alimenta la tabla perfil_carga_horaria (18 tipos de servicio, 3 tipos de día y 24 horas, 1.296 registros).
-5. Correr las etapas en orden: catálogos, parámetros temporales, padrón, anomalías, lecturas, vigilancia y facturación.
-6. Insertar en la base por lotes, con commits por bloque y puntos de reanudación.
-7. Validar la corrida: conteos por tabla, integridad de claves y reproducibilidad.
-8. Construir el datamart y los dashboards sobre los datos validados.
+📄 generation.yaml
+----------------------------------------------------------------------
 
-Nota sobre la etapa 3: el catálogo de tipos de servicio vive fuera del repositorio (Test/Testing_data/Tipo_servicio.json), porque la carpeta Test no se versiona. Cada integrante debe contar con ese archivo en la ruta esperada antes de ejecutar el generador de perfiles.
+Define el alcance de una corrida de generación:
 
-## Reproducibilidad y validación
+  • Nombre
+  • Semilla
+  • Fecha inicial
+  • Fecha final
+  • Intervalo de lectura
+  • Número de servicios
+  • Tamaño de lote
+  • Funcionalidades habilitadas
 
-Dos corridas con la misma semilla y la misma versión de reglas producen resultados idénticos. Para garantizarlo:
+En otras palabras:
 
-- Rules.json se versiona con semver; cada corrida registra la versión usada y la huella de configuración en corrida_generacion.
-- Los catálogos son estáticos: el escenario geográfico no cambia entre corridas.
-- La validación de control compara una corrida de referencia contra la oficial y exige diff vacío.
+  ❓ ¿QUÉ cantidad de datos se va a generar?
 
-Criterios de aceptación medibles:
 
-- Volumen: al menos 10 millones de filas insertadas.
-- Reproducibilidad: dos corridas con la misma semilla y versión de reglas, idénticas.
-- Integridad: claves primarias y foráneas válidas, sin nulos en las claves y energías no negativas.
-- Tasas: eventos y alertas coherentes con las reglas declaradas.
-- Rendimiento: escritura por lotes, memoria acotada y reanudación sin duplicar ni perder lecturas.
+📄 rules.yaml
+----------------------------------------------------------------------
 
-## Próximos pasos
+Contiene las reglas utilizadas por los generadores:
 
-La etapa de perfiles está implementada y en fase de pruebas. Siguen, en orden: catálogos y parámetros temporales, padrón, sorteo de anomalías, lecturas por lotes con reanudación, vigilancia, facturación, validación integral y el BI sobre el datamart.
+  • Distribución de servicios
+  • Probabilidad de generación solar
+  • Ocupación residencial
+  • Carga contratada
+  • Marcas de medidores
+  • Calidad de enlace
+  • Temperaturas
+  • Factores estacionales
+  • Variación aleatoria del consumo
 
-## Asignación de tareas y estado del equipo
+En otras palabras:
 
-División de la generación entre 6 personas, 4 zonas por persona (24 zonas de Nexpahuacán).
-La matriz completa con cuotas, semillas y cronograma vive en `Assignment/ASIGNACION_24_ZONAS.md`;
-las plantillas de reglas, en `Generation/Zonas/reglas_Pn.json`. Cada integrante compone además
-los nombres de sus 3 zonas sin ancla (regla RD-06: nada de "Zona 7" ni fuentes reales).
+  ❓ ¿CÓMO deben comportarse los datos generados?
 
-| Integrante | Rol | Tareas asignadas | Estado | Rama de trabajo |
-|---|---|---|---|---|
-| Mateo Jiménez Pérez | Lead base de datos, líder de integración | Corrida maestra, unión de los 6 bloques, semilla raíz, versionado. Zonas 1, 7, 13, 19 | Pendiente | feat/division-zonas-6-personas |
-| David Nieto Ayala | Performance y perfiles | Perfiles de carga (1.296), calendario de 90 días. Zonas 2, 8, 14, 20 | En revisión | feat/division-zonas-6-personas |
-| Isabela Mosquera Fernández | Reglas y anomalías | Maestro de Rules.json, sorteo de eventos, tasas. Zonas 3, 9, 15, 21 | En progreso | feat/division-zonas-6-personas |
-| Aalan Kalid Ruiz Colin | Persistencia | Esquema de 13 tablas, inserción por lotes, checkpoints. Zonas 4, 10, 16, 22 | Pendiente | feat/division-zonas-6-personas |
-| Sergio Martínez Blas | Validación de integridad | Conteos por tabla, claves, energías no negativas. Zonas 5, 11, 17, 23 | Pendiente | feat/division-zonas-6-personas |
-| Ramiro Vega Meza | Reproducibilidad y documentación | Diff entre corridas, guía de reproducción. Zonas 6, 12, 18, 24 | Pendiente | feat/division-zonas-6-personas |
 
-Estados: Pendiente, En progreso, En revisión, Completado. Los estados reflejan el avance real
-del repositorio: la etapa de perfiles (David) está implementada y en pruebas; Rules.json tiene
-la versión base 1.0.0 (Isabela la amplía); el resto de etapas aún no arranca. La generación se
-trabaja en ramas por tarea y se integra a main por Pull Request, como manda la política del equipo.
+📄 config_loader.py
+----------------------------------------------------------------------
 
-## Reglas de trabajo
+Lee:
 
-- Commits pequeños y descriptivos.
-- Integración en una rama de desarrollo; main se mantiene estable.
-- Nunca subir credenciales, resultados de corridas ni archivos de prueba al repositorio.
-- Cualquier cambio en las reglas de generación sube la versión semver de Rules.json.
+  • generation.yaml
+  • rules.yaml
 
-El repositorio vive de la disciplina de sus reglas: si las reglas cambian y no sube la versión, las corridas dejan de ser comparables. Ese es el único punto que no admite relajación.
+Evita que cada generador tenga que abrir manualmente los archivos
+de configuración.
+
+
+📄 settings.py
+----------------------------------------------------------------------
+
+Lee las variables almacenadas en:
+
+  .env
+
+Contiene la configuración necesaria para establecer la conexión
+con PostgreSQL.
+
+
+======================================================================
+🗄️ 05. BASE DE DATOS
+======================================================================
+
+📁 database/
+
+Contiene la infraestructura de acceso y despliegue de PostgreSQL.
+
+
+📄 database/sql/01_esquema.sql
+----------------------------------------------------------------------
+
+Crea:
+
+  ✓ Esquema "energia"
+  ✓ 13 tablas principales
+  ✓ Restricciones
+  ✓ Índices
+  ✓ Particiones mensuales de "lectura"
+
+
+📄 database/sql/02_catalogos.sql
+----------------------------------------------------------------------
+
+Carga los datos fijos del sistema:
+
+  Zonas o localidades de Toluca ...... 46
+  Tarifas ............................. 7
+  Tipos de servicio .................. 18
+  Tipos de evento .................... 7
+  Perfiles horarios .................. 1,296
+
+
+Los perfiles horarios se calculan como:
+
+  18 tipos de servicio
+      ×
+   3 tipos de día
+      ×
+  24 horas
+      │
+      ▼
+  1,296 perfiles
+
+
+📄 connection.py
+----------------------------------------------------------------------
+
+Abre la conexión entre Python y PostgreSQL utilizando las variables
+definidas en ".env".
+
+
+📄 database_check.py
+----------------------------------------------------------------------
+
+Comprueba que estén disponibles:
+
+  ✓ Base de datos
+  ✓ Esquema
+  ✓ Tablas necesarias
+
+
+📄 partition_manager.py
+----------------------------------------------------------------------
+
+Administra las particiones mensuales de:
+
+  energia.lectura
+
+
+======================================================================
+🏭 06. GENERADORES
+======================================================================
+
+📁 Generation/
+
+Esta carpeta contendrá los programas responsables de generar los
+datos variables.
+
+Arquitectura prevista:
+
+Generation/
+│
+├── Calendario_Gen.py
+├── Servicios_Gen.py
+├── Dispositivos_Gen.py
+├── Eventos_Gen.py
+├── Lecturas_Gen.py
+├── Alertas_Gen.py
+├── Facturacion_Gen.py
+└── Generador.py
+
+
+Cada archivo tendrá una responsabilidad específica.
+
+⚠️ IMPORTANTE
+
+Esta es la arquitectura prevista.
+
+No significa que todos estos componentes se encuentren actualmente
+implementados.
+
+
+======================================================================
+🗃️ 07. MODELO DE DATOS
+======================================================================
+
+La base contiene 13 tablas principales.
+
+
+📚 CATÁLOGOS
+----------------------------------------------------------------------
+
+  • zona
+  • tarifa
+  • tipo_servicio
+  • tipo_evento
+
+
+⚙️ PARÁMETROS
+----------------------------------------------------------------------
+
+  • perfil_carga_horaria
+  • calendario
+  • corrida_generacion
+
+
+🏠 DATOS MAESTROS
+----------------------------------------------------------------------
+
+  • servicio
+  • medidor
+
+
+📊 HECHOS
+----------------------------------------------------------------------
+
+  • evento
+  • lectura
+  • alerta
+  • periodo_facturacion
+
+
+Visualmente:
+
+  ┌──────────────────────────────┐
+  │         📚 CATÁLOGOS         │
+  │                              │
+  │  zona                        │
+  │  tarifa                      │
+  │  tipo_servicio               │
+  │  tipo_evento                 │
+  └──────────────┬───────────────┘
+                 │
+                 ▼
+  ┌──────────────────────────────┐
+  │         ⚙️ PARÁMETROS        │
+  │                              │
+  │  perfil_carga_horaria        │
+  │  calendario                  │
+  │  corrida_generacion          │
+  └──────────────┬───────────────┘
+                 │
+                 ▼
+  ┌──────────────────────────────┐
+  │       🏠 DATOS MAESTROS      │
+  │                              │
+  │  servicio                    │
+  │  medidor                     │
+  └──────────────┬───────────────┘
+                 │
+                 ▼
+  ┌──────────────────────────────┐
+  │          📊 HECHOS           │
+  │                              │
+  │  evento                      │
+  │  lectura                     │
+  │  alerta                      │
+  │  periodo_facturacion         │
+  └──────────────────────────────┘
+
+
+======================================================================
+🔄 08. FLUJO DE GENERACIÓN
+======================================================================
+
+El flujo general previsto es:
+
+
+  01_esquema.sql
+        │
+        ▼
+  🗄️ Crear estructura
+        │
+        ▼
+  02_catalogos.sql
+        │
+        ▼
+  📚 Cargar catálogos
+        │
+        ▼
+  Calendario_Gen.py
+        │
+        ▼
+  📅 Generar 90 días
+        │
+        ▼
+  Servicios_Gen.py
+        │
+        ▼
+  🏠 Generar 5,000 servicios
+        │
+        ▼
+  Dispositivos_Gen.py
+        │
+        ▼
+  📟 Generar medidores
+        │
+        ▼
+  Eventos_Gen.py
+        │
+        ▼
+  ⚠️ Generar anomalías
+        │
+        ▼
+  Lecturas_Gen.py
+        │
+        ▼
+  ⚡ Generar 10,800,000 lecturas
+        │
+        ▼
+  Alertas_Gen.py
+        │
+        ▼
+  🚨 Simular detección
+        │
+        ▼
+  Facturacion_Gen.py
+        │
+        ▼
+  🧾 Generar periodos mensuales
+
+
+======================================================================
+⚡ 09. GENERACIÓN DEL CONSUMO
+======================================================================
+
+Para cada medidor y cada hora se calculará:
+
+
+  consumo_real
+       =
+  consumo_base
+       ×
+  perfil_horario
+       ×
+  factor_socioeconomico
+       ×
+  factor_estacional
+       ×
+  variacion_aleatoria
+
+
+📍 ORIGEN DE CADA COMPONENTE
+----------------------------------------------------------------------
+
+consumo_base
+└── energia.tipo_servicio
+
+perfil_horario
+└── energia.perfil_carga_horaria
+
+factor_socioeconomico
+└── energia.zona
+
+factor_estacional
+└── energia.calendario
+
+variacion_aleatoria
+└── config/rules.yaml
+
+
+🧪 EJEMPLO
+----------------------------------------------------------------------
+
+Consumo base ......................... 0.350
+Perfil horario ....................... 2.180
+Factor socioeconómico ................ 1.250
+Factor estacional .................... 1.080
+Variación aleatoria .................. 0.970
+
+
+Operación:
+
+  0.350 × 2.180 × 1.250 × 1.080 × 0.970
+
+Resultado:
+
+  ≈ 0.999 kWh
+
+
+======================================================================
+🔍 10. CONSUMO REAL Y CONSUMO REPORTADO
+======================================================================
+
+Cada lectura contiene dos valores:
+
+  consumo_real_kwh
+  consumo_kwh
+
+
+✅ OPERACIÓN NORMAL
+----------------------------------------------------------------------
+
+  consumo_kwh = consumo_real_kwh
+
+
+⚠️ OPERACIÓN CON ANOMALÍA
+----------------------------------------------------------------------
+
+El consumo reportado puede ser diferente al consumo real.
+
+
+📈 
