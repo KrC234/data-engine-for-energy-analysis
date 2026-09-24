@@ -1,281 +1,59 @@
 # ============================================================
 # CONFIGURACION DE LA CORRIDA
 # ============================================================
-#
-# Este archivo define el alcance de una ejecución:
-#
-# - qué periodo se generará;
-# - cuántos servicios y medidores existirán;
-# - cada cuánto se generará una lectura;
-# - cuántas lecturas se esperan;
-# - qué módulos estarán habilitados.
-#
-# Las reglas matemáticas y probabilidades se encuentran
-# separadas en config/rules.yaml.
-# ============================================================
-
 
 generation:
-
-  # Nombre descriptivo de la corrida.
-  #
-  # Se utilizará para identificar la ejecución dentro de
-  # energia.corrida_generacion.
   name: "toluca_hsd_90_dias"
-
-
-  # Semilla utilizada por el generador pseudoaleatorio.
-  #
-  # Si se ejecuta nuevamente el proyecto con:
-  #
-  # - la misma semilla;
-  # - las mismas reglas;
-  # - la misma configuración;
-  #
-  # se deben obtener los mismos resultados.
-  #
-  # El valor 20260101 representa la fecha 1 de enero de 2026,
-  # pero técnicamente puede ser cualquier número entero.
   seed: 20260101
-
-
-  # Versión de las reglas utilizadas para generar los datos.
-  #
-  # Permite distinguir corridas hechas con reglas diferentes.
-  #
-  # Ejemplo:
-  #
-  # 2.0.0 = versión actual
-  # 2.1.0 = cambios menores en las reglas
-  # 3.0.0 = cambio importante en la lógica de generación
   rules_version: "2.0.0"
 
+  start_date: "2026-01-01"
+  end_date: "2026-03-31"
 
-  # Primera fecha incluida en la generación.
-  date_start: "2026-01-01"
+  reading_interval_minutes: 60
 
-
-  # Última fecha incluida en la generación.
-  #
-  # El rango del 1 de enero al 31 de marzo de 2026
-  # contiene exactamente 90 días.
-  date_end: "2026-03-31"
-
-
-  # Cantidad de minutos entre cada lectura.
-  #
-  # 60 minutos significa:
-  #
-  # 1 lectura por hora
-  # 24 lecturas por día
-  # 2,160 lecturas por medidor en 90 días
-  interval_minutes: 60
-
-
-  # Número total de puntos de consumo que se generarán.
-  #
-  # Cada servicio representa un contrato o punto de consumo:
-  #
-  # - vivienda;
-  # - comercio;
-  # - escuela;
-  # - hospital;
-  # - alumbrado;
-  # - semáforo;
-  # - instalación de bombeo.
   services: 5000
-
-
-  # Cantidad de medidores que estarán activos.
-  #
-  # En la primera versión del generador:
-  #
-  # 1 servicio = 1 medidor activo
   active_meters: 5000
-
-
-  # Cantidad de medidores adicionales utilizados para representar
-  # reemplazos durante el periodo.
-  #
-  # Cuando un medidor se reemplaza:
-  #
-  # - el servicio continúa existiendo;
-  # - el medidor anterior recibe fecha de retiro;
-  # - se crea un medidor nuevo para el mismo servicio.
-  #
-  # Por tanto, el total final esperado en energia.medidor sería:
-  #
-  # 5,000 activos + 260 reemplazos = 5,260 medidores
   replacement_meters: 260
 
-
-  # Nombre del territorio utilizado como referencia contextual.
-  #
-  # Las zonas están basadas en localidades reales agregadas,
-  # pero los servicios, medidores y lecturas son sintéticos.
   territory: "Toluca, Estado de Mexico"
+  batch_size: 100000
+
+  # IMPORTANTE:
+  # Este bloque debe estar DENTRO de generation.
+  service_generation:
+    replace_existing: true
 
 
 # ============================================================
 # CONFIGURACION DE RENDIMIENTO
 # ============================================================
-#
-# Este bloque controla cómo se procesan los datos.
-# No modifica el comportamiento energético del escenario.
-# ============================================================
 
 performance:
-
-  # Cantidad máxima de lecturas que se mantienen en memoria
-  # antes de enviarlas a PostgreSQL.
-  #
-  # El proceso será:
-  #
-  # 1. Generar 100,000 lecturas.
-  # 2. Insertarlas en PostgreSQL.
-  # 3. Vaciar el lote de memoria.
-  # 4. Generar el siguiente lote.
-  #
-  # Esto evita almacenar las 10.8 millones de lecturas
-  # simultáneamente en la memoria RAM.
   batch_size: 100000
-
-
-  # Número de procesos encargados de generar datos.
-  #
-  # Se utiliza 1 para mantener la generación:
-  #
-  # - sencilla;
-  # - reproducible;
-  # - fácil de depurar;
-  # - segura para PostgreSQL.
-  #
-  # Más adelante puede aumentarse si se implementa procesamiento
-  # paralelo correctamente.
   workers: 1
-
-
-  # Cantidad máxima de lotes que podrían esperar para insertarse
-  # en PostgreSQL si se utiliza una cola productor-consumidor.
-  #
-  # Con batch_size = 100000 y queue_size = 2,
-  # podrían esperar hasta 200,000 lecturas.
-  #
-  # En la primera versión secuencial este valor puede no utilizarse,
-  # pero se conserva para una futura generación paralela.
   queue_size: 2
 
 
 # ============================================================
 # FUNCIONALIDADES HABILITADAS
 # ============================================================
-#
-# Este bloque permite activar o desactivar partes del generador
-# sin modificar el código Python.
-# ============================================================
 
 features:
-
-  # true:
-  # Generar anomalías en energia.evento.
-  #
-  # false:
-  # Generar únicamente comportamiento normal.
   events: true
-
-
-  # true:
-  # Generar alertas asociadas a eventos y algunas falsas alarmas.
-  #
-  # Requiere que events también esté habilitado.
   alerts: true
-
-
-  # true:
-  # Generar tres periodos mensuales por servicio:
-  #
-  # - enero;
-  # - febrero;
-  # - marzo.
-  #
-  # Con 5,000 servicios se esperan:
-  #
-  # 5,000 × 3 = 15,000 periodos de facturación
   billing: true
-
-
-  # true:
-  # Permitir que algunos servicios sintéticos tengan generación
-  # solar de acuerdo con las probabilidades de rules.yaml.
-  #
-  # Durante las horas solares se reducirá una parte del consumo
-  # neto del servicio.
   solar: true
-
-
-  # true:
-  # Generar los medidores de reemplazo definidos en
-  # replacement_meters.
-  #
-  # false:
-  # Generar solamente los 5,000 medidores iniciales.
   meter_replacements: true
 
 
 # ============================================================
 # VALIDACIONES
 # ============================================================
-#
-# Este bloque controla las comprobaciones que se realizarán
-# durante o después de la generación.
-# ============================================================
 
 validation:
-
-  # Activa todas las validaciones generales.
-  #
-  # Si está en false, el generador no ejecutará las comprobaciones
-  # finales, aunque los datos sí podrían generarse.
   enabled: true
-
-
-  # Número mínimo de registros esperado en todo el proyecto.
-  #
-  # El objetivo académico es superar diez millones de registros.
   minimum_total_records: 10000000
-
-
-  # Número exacto de lecturas esperado.
-  #
-  # Cálculo:
-  #
-  # 5,000 medidores
-  # × 90 días
-  # × 24 lecturas por día
-  # = 10,800,000 lecturas
   expected_readings: 10800000
-
-
-  # Comprueba la integridad de los datos.
-  #
-  # Algunas validaciones esperadas:
-  #
-  # - cada medidor pertenece a un servicio existente;
-  # - cada servicio pertenece a una zona existente;
-  # - no existen lecturas duplicadas;
-  # - el consumo real nunca es NULL;
-  # - ninguna lectura real es negativa;
-  # - los eventos terminan después de comenzar.
   integrity_check: true
-
-
-  # Comprueba que la generación sea reproducible.
-  #
-  # La misma:
-  #
-  # - semilla;
-  # - versión de reglas;
-  # - configuración;
-  #
-  # debe producir los mismos datos.
   reproducibility_check: true

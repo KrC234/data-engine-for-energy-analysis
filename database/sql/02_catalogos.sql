@@ -1,83 +1,154 @@
+ROLLBACK;
+
 -- ============================================================
 -- 02_catalogos.sql
--- HyperDataSynthetic - Caso de estudio: municipio de Toluca
+-- HyperDataSynthetic
+-- Caso de estudio: municipio de Toluca
 --
--- Requisitos:
---   1) Ejecutar conectado a energia_hsd.
---   2) Ejecutar despues de 01_esquema.sql.
---
--- Este script puede reejecutarse mientras aun no existan servicios, medidores
--- ni hechos. Si ya existe padron, se detiene para proteger la integridad.
--- Los nombres, poblacion, viviendas, rezago y factor socioeconomico
--- proceden del insumo territorial agregado del proyecto.
---
--- IMPORTANTE SOBRE superficie_km2:
---   Son estimaciones HSD no oficiales, calculadas proporcionalmente con
---   viviendas habitadas para completar el modelo sin valores NULL.
---   Deben reemplazarse si posteriormente se calculan areas con cartografia.
+-- REQUISITOS:
+-- 1. Estar conectado a la base energia_hsd
+-- 2. Haber ejecutado previamente 01_esquema.sql
 -- ============================================================
 
 BEGIN;
-SET search_path TO energia;
+
+SET search_path TO energia, public;
+
+
+-- ============================================================
+-- 0. PROTECCION DE DATOS EXISTENTES
+-- ============================================================
+-- No permite reinicializar los catalogos si ya existen datos
+-- operativos.
+-- ============================================================
 
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM servicio LIMIT 1)
-       OR EXISTS (SELECT 1 FROM medidor LIMIT 1)
-       OR EXISTS (SELECT 1 FROM evento LIMIT 1)
-       OR EXISTS (SELECT 1 FROM lectura LIMIT 1)
-       OR EXISTS (SELECT 1 FROM alerta LIMIT 1)
-       OR EXISTS (SELECT 1 FROM periodo_facturacion LIMIT 1)
+    IF EXISTS (SELECT 1 FROM energia.servicio LIMIT 1)
+       OR EXISTS (SELECT 1 FROM energia.medidor LIMIT 1)
+       OR EXISTS (SELECT 1 FROM energia.evento LIMIT 1)
+       OR EXISTS (SELECT 1 FROM energia.lectura LIMIT 1)
+       OR EXISTS (SELECT 1 FROM energia.alerta LIMIT 1)
+       OR EXISTS (SELECT 1 FROM energia.periodo_facturacion LIMIT 1)
     THEN
         RAISE EXCEPTION
-            '02_catalogos.sql no puede reinicializar catalogos: ya existe padron o informacion de hechos.';
+            '02_catalogos.sql no puede reinicializar catalogos porque ya existe padron o informacion de hechos.';
     END IF;
-END $$;
+END
+$$ LANGUAGE plpgsql;
 
-TRUNCATE TABLE perfil_carga_horaria;
-TRUNCATE TABLE tipo_evento;
-TRUNCATE TABLE tipo_servicio;
-TRUNCATE TABLE tarifa;
-TRUNCATE TABLE zona;
 
 -- ============================================================
--- 0. AJUSTE DE TRAZABILIDAD TERRITORIAL
+-- 1. VACIAR TABLAS
 -- ============================================================
-ALTER TABLE zona
+-- Se incluyen tablas padre e hijas en el mismo TRUNCATE para
+-- respetar las claves foraneas.
+-- ============================================================
+
+TRUNCATE TABLE
+    energia.perfil_carga_horaria,
+    energia.alerta,
+    energia.lectura,
+    energia.periodo_facturacion,
+    energia.evento,
+    energia.medidor,
+    energia.servicio,
+    energia.tipo_evento,
+    energia.tipo_servicio,
+    energia.tarifa,
+    energia.zona;
+
+
+-- ============================================================
+-- 2. AJUSTE DE TRAZABILIDAD TERRITORIAL
+-- ============================================================
+
+ALTER TABLE energia.zona
     ADD COLUMN IF NOT EXISTS poblacion_total INTEGER,
     ADD COLUMN IF NOT EXISTS viviendas_habitadas INTEGER,
     ADD COLUMN IF NOT EXISTS grado_rezago_representativo VARCHAR(12),
     ADD COLUMN IF NOT EXISTS id_referencia INTEGER;
 
-ALTER TABLE zona
+
+ALTER TABLE energia.zona
     ALTER COLUMN superficie_km2 SET NOT NULL;
 
-ALTER TABLE zona DROP CONSTRAINT IF EXISTS ck_zona_poblacion;
-ALTER TABLE zona ADD CONSTRAINT ck_zona_poblacion
-    CHECK (poblacion_total IS NULL OR poblacion_total >= 0);
 
-ALTER TABLE zona DROP CONSTRAINT IF EXISTS ck_zona_viviendas;
-ALTER TABLE zona ADD CONSTRAINT ck_zona_viviendas
-    CHECK (viviendas_habitadas IS NULL OR viviendas_habitadas >= 0);
+-- ============================================================
+-- CONSTRAINT: POBLACION
+-- ============================================================
 
-ALTER TABLE zona DROP CONSTRAINT IF EXISTS ck_zona_rezago;
-ALTER TABLE zona ADD CONSTRAINT ck_zona_rezago
+ALTER TABLE energia.zona
+    DROP CONSTRAINT IF EXISTS ck_zona_poblacion;
+
+ALTER TABLE energia.zona
+    ADD CONSTRAINT ck_zona_poblacion
     CHECK (
-        grado_rezago_representativo IS NULL OR
-        grado_rezago_representativo IN ('Muy bajo','Bajo','Medio','Alto','Muy alto')
+        poblacion_total IS NULL
+        OR poblacion_total >= 0
     );
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_zona_id_referencia
-    ON zona (id_referencia)
-    WHERE id_referencia IS NOT NULL;
 
 -- ============================================================
--- 1. ZONAS: 46 LOCALIDADES DE TOLUCA
+-- CONSTRAINT: VIVIENDAS
 -- ============================================================
-INSERT INTO zona (
-    id_zona, nombre, tipo_urbano, superficie_km2,
-    factor_socioeconomico, poblacion_total, viviendas_habitadas,
-    grado_rezago_representativo, id_referencia
+
+ALTER TABLE energia.zona
+    DROP CONSTRAINT IF EXISTS ck_zona_viviendas;
+
+ALTER TABLE energia.zona
+    ADD CONSTRAINT ck_zona_viviendas
+    CHECK (
+        viviendas_habitadas IS NULL
+        OR viviendas_habitadas >= 0
+    );
+
+
+-- ============================================================
+-- CONSTRAINT: REZAGO
+-- ============================================================
+
+ALTER TABLE energia.zona
+    DROP CONSTRAINT IF EXISTS ck_zona_rezago;
+
+ALTER TABLE energia.zona
+    ADD CONSTRAINT ck_zona_rezago
+    CHECK (
+        grado_rezago_representativo IS NULL
+        OR grado_rezago_representativo IN (
+            'Muy bajo',
+            'Bajo',
+            'Medio',
+            'Alto',
+            'Muy alto'
+        )
+    );
+
+
+-- ============================================================
+-- INDICE DE REFERENCIA
+-- ============================================================
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_zona_id_referencia
+    ON energia.zona (id_referencia)
+    WHERE id_referencia IS NOT NULL;
+
+
+-- ============================================================
+-- 3. ZONAS
+-- 46 LOCALIDADES DE TOLUCA
+-- ============================================================
+
+INSERT INTO energia.zona (
+    id_zona,
+    nombre,
+    tipo_urbano,
+    superficie_km2,
+    factor_socioeconomico,
+    poblacion_total,
+    viviendas_habitadas,
+    grado_rezago_representativo,
+    id_referencia
 )
 VALUES
     (1, 'Toluca de Lerdo', 'CENTRO', 82.492, 1.739, 223876, 65993, 'Bajo', 1),
@@ -127,68 +198,192 @@ VALUES
     (45, 'Galaxias Toluca', 'RESIDENCIAL_MEDIA', 1.160, 1.625, 3090, 928, 'Bajo', 45),
     (46, 'La Magdalena Otzacatipan', 'MIXTA', 0.779, 1.250, 2568, 623, 'Medio', 46);
 
--- ============================================================
--- 2. TARIFAS: 7 CLASIFICACIONES DEL MODELO
--- ============================================================
-INSERT INTO tarifa (id_tarifa, codigo, nombre, categoria, limite_dac_kwh_mes)
-VALUES
-    (1, '1',     'Domestica de consumo basico',       'DOMESTICA',       250),
-    (2, '1C',    'Domestica de clima calido',         'DOMESTICA',       850),
-    (3, 'DAC',   'Domestica de alto consumo',         'DOMESTICA',       NULL),
-    (4, 'PDBT',  'Pequena demanda comercial',         'COMERCIAL',       NULL),
-    (5, 'GDBT',  'Gran demanda comercial',            'COMERCIAL',       NULL),
-    (6, 'GDMTH', 'Gran demanda en media tension',     'SERVICIO_PUBLICO',NULL),
-    (7, 'APBT',  'Alumbrado publico en baja tension', 'ALUMBRADO',       NULL);
 
 -- ============================================================
--- 3. TIPOS DE SERVICIO: 18 CLASES
+-- 4. TARIFAS
 -- ============================================================
-INSERT INTO tipo_servicio (
-    id_tipo_servicio, clave, nombre, categoria,
-    consumo_base_kwh_h, factor_dispersion, sensibilidad_temp
+
+INSERT INTO energia.tarifa (
+    id_tarifa,
+    codigo,
+    nombre,
+    categoria,
+    limite_dac_kwh_mes
 )
 VALUES
-    (1,  'VIV_UNIF',   'Vivienda unifamiliar',          'RESIDENCIAL', 0.350, 0.420, 0.045),
-    (2,  'VIV_DEPTO',  'Departamento',                  'RESIDENCIAL', 0.240, 0.380, 0.038),
-    (3,  'VIV_SOCIAL', 'Vivienda de interes social',    'RESIDENCIAL', 0.190, 0.350, 0.030),
-    (4,  'VIV_RESID',  'Vivienda de consumo alto',      'RESIDENCIAL', 0.980, 0.550, 0.075),
-    (5,  'COM_LOCAL',  'Local comercial de barrio',     'COMERCIAL',   1.100, 0.480, 0.040),
-    (6,  'MERCADO',    'Mercado publico municipal',     'PUBLICO',    18.500, 0.300, 0.055),
-    (7,  'ESCUELA',    'Escuela publica',               'PUBLICO',     6.400, 0.280, 0.035),
-    (8,  'CLINICA',    'Centro de salud',               'PUBLICO',    22.000, 0.250, 0.050),
-    (9,  'HOSPITAL',   'Hospital',                       'PUBLICO',    85.000, 0.200, 0.048),
-    (10, 'EDIF_GOB',   'Edificio gubernamental',        'PUBLICO',    14.200, 0.320, 0.060),
-    (11, 'BIBLIOTECA', 'Biblioteca publica',            'PUBLICO',     4.100, 0.300, 0.042),
-    (12, 'CTRO_CULT',  'Centro cultural',               'PUBLICO',     5.300, 0.300, 0.040),
-    (13, 'CTRO_DEP',   'Centro deportivo',              'PUBLICO',    11.800, 0.350, 0.030),
-    (14, 'PARQUE',     'Parque publico iluminado',      'PUBLICO',     2.700, 0.250, 0.005),
-    (15, 'POZO_AGUA',  'Pozo de agua potable',          'SERVICIO',   42.000, 0.200, 0.010),
-    (16, 'BOMBEO',     'Planta de rebombeo',            'SERVICIO',   58.000, 0.180, 0.008),
-    (17, 'ALUMB_PUB',  'Circuito de alumbrado publico', 'ALUMBRADO',   9.600, 0.220, 0.000),
-    (18, 'SEMAFORO',   'Nodo de semaforizacion',        'MOVILIDAD',   0.420, 0.150, 0.000);
+    (1, '1', 'Domestica de consumo basico', 'DOMESTICA', 250),
+    (2, '1C', 'Domestica de clima calido', 'DOMESTICA', 850),
+    (3, 'DAC', 'Domestica de alto consumo', 'DOMESTICA', NULL),
+    (4, 'PDBT', 'Pequena demanda comercial', 'COMERCIAL', NULL),
+    (5, 'GDBT', 'Gran demanda comercial', 'COMERCIAL', NULL),
+    (6, 'GDMTH', 'Gran demanda en media tension', 'SERVICIO_PUBLICO', NULL),
+    (7, 'APBT', 'Alumbrado publico en baja tension', 'ALUMBRADO', NULL);
+
 
 -- ============================================================
--- 4. TIPOS DE EVENTO: 7 ANOMALIAS
+-- 5. TIPOS DE SERVICIO
 -- ============================================================
-INSERT INTO tipo_evento (
-    id_tipo_evento, clave, nombre, efecto, afecta_acumulado,
-    duracion_min_h, duracion_max_h, intensidad_min, intensidad_max,
-    tasa_por_medidor_mes, prob_deteccion, regla_deteccion
+
+INSERT INTO energia.tipo_servicio (
+    id_tipo_servicio,
+    clave,
+    nombre,
+    categoria,
+    consumo_base_kwh_h,
+    factor_dispersion,
+    sensibilidad_temp
 )
 VALUES
-    (1, 'PICO_DEMANDA',         'Pico de demanda',                'INCREMENTO',    TRUE,  1,   3, 2.500, 6.000, 0.0600, 0.950, 'UMBRAL_PICO'),
-    (2, 'CONSUMO_ANOMALO',      'Consumo anomalo sostenido',      'INCREMENTO',    TRUE, 24, 168, 1.400, 2.200, 0.0400, 0.700, 'DESVIACION_PERSISTENTE'),
-    (3, 'MANIPULACION',         'Manipulacion de medidor',        'REDUCCION',     TRUE,168, 720, 0.200, 0.600, 0.0080, 0.350, 'BRECHA_REAL_REPORTADA'),
-    (4, 'FALLA_MEDIDOR',        'Falla de medidor',               'CONGELAMIENTO', TRUE, 12, 336, NULL,  NULL,  0.0100, 0.400, 'VALOR_CONGELADO'),
-    (5, 'PERDIDA_COMUNICACION', 'Perdida de comunicacion',        'NULIFICACION',  FALSE, 1,  24, NULL,  NULL,  0.9000, 0.980, 'LECTURA_AUSENTE'),
-    (6, 'SOBRECARGA',           'Sobrecarga de capacidad',        'INCREMENTO',    TRUE,  1,   6, 1.800, 3.000, 0.0150, 0.900, 'CARGA_CONTRATADA'),
-    (7, 'MANTENIMIENTO',        'Mantenimiento programado',       'REDUCCION',     FALSE, 2,   8, 0.000, 0.250, 0.0200, 1.000, 'VENTANA_PROGRAMADA');
+    (1, 'VIV_UNIF', 'Vivienda unifamiliar', 'RESIDENCIAL', 0.350, 0.420, 0.045),
+    (2, 'VIV_DEPTO', 'Departamento', 'RESIDENCIAL', 0.240, 0.380, 0.038),
+    (3, 'VIV_SOCIAL', 'Vivienda de interes social', 'RESIDENCIAL', 0.190, 0.350, 0.030),
+    (4, 'VIV_RESID', 'Vivienda de consumo alto', 'RESIDENCIAL', 0.980, 0.550, 0.075),
+    (5, 'COM_LOCAL', 'Local comercial de barrio', 'COMERCIAL', 1.100, 0.480, 0.040),
+    (6, 'MERCADO', 'Mercado publico municipal', 'PUBLICO', 18.500, 0.300, 0.055),
+    (7, 'ESCUELA', 'Escuela publica', 'PUBLICO', 6.400, 0.280, 0.035),
+    (8, 'CLINICA', 'Centro de salud', 'PUBLICO', 22.000, 0.250, 0.050),
+    (9, 'HOSPITAL', 'Hospital', 'PUBLICO', 85.000, 0.200, 0.048),
+    (10, 'EDIF_GOB', 'Edificio gubernamental', 'PUBLICO', 14.200, 0.320, 0.060),
+    (11, 'BIBLIOTECA', 'Biblioteca publica', 'PUBLICO', 4.100, 0.300, 0.042),
+    (12, 'CTRO_CULT', 'Centro cultural', 'PUBLICO', 5.300, 0.300, 0.040),
+    (13, 'CTRO_DEP', 'Centro deportivo', 'PUBLICO', 11.800, 0.350, 0.030),
+    (14, 'PARQUE', 'Parque publico iluminado', 'PUBLICO', 2.700, 0.250, 0.005),
+    (15, 'POZO_AGUA', 'Pozo de agua potable', 'SERVICIO', 42.000, 0.200, 0.010),
+    (16, 'BOMBEO', 'Planta de rebombeo', 'SERVICIO', 58.000, 0.180, 0.008),
+    (17, 'ALUMB_PUB', 'Circuito de alumbrado publico', 'ALUMBRADO', 9.600, 0.220, 0.000),
+    (18, 'SEMAFORO', 'Nodo de semaforizacion', 'MOVILIDAD', 0.420, 0.150, 0.000);
+
 
 -- ============================================================
--- 5. PERFILES DE CARGA HORARIA
--- 18 tipos x 3 clases de dia x 24 horas = 1,296 filas.
--- Cada curva se normaliza para que sus 24 factores sumen 24.
+-- 6. TIPOS DE EVENTO
 -- ============================================================
+
+INSERT INTO energia.tipo_evento (
+    id_tipo_evento,
+    clave,
+    nombre,
+    efecto,
+    afecta_acumulado,
+    duracion_min_h,
+    duracion_max_h,
+    intensidad_min,
+    intensidad_max,
+    tasa_por_medidor_mes,
+    prob_deteccion,
+    regla_deteccion
+)
+VALUES
+    (
+        1,
+        'PICO_DEMANDA',
+        'Pico de demanda',
+        'INCREMENTO',
+        TRUE,
+        1,
+        3,
+        2.500,
+        6.000,
+        0.0600,
+        0.950,
+        'UMBRAL_PICO'
+    ),
+    (
+        2,
+        'CONSUMO_ANOMALO',
+        'Consumo anomalo sostenido',
+        'INCREMENTO',
+        TRUE,
+        24,
+        168,
+        1.400,
+        2.200,
+        0.0400,
+        0.700,
+        'DESVIACION_PERSISTENTE'
+    ),
+    (
+        3,
+        'MANIPULACION',
+        'Manipulacion de medidor',
+        'REDUCCION',
+        TRUE,
+        168,
+        720,
+        0.200,
+        0.600,
+        0.0080,
+        0.350,
+        'BRECHA_REAL_REPORTADA'
+    ),
+    (
+        4,
+        'FALLA_MEDIDOR',
+        'Falla de medidor',
+        'CONGELAMIENTO',
+        TRUE,
+        12,
+        336,
+        NULL,
+        NULL,
+        0.0100,
+        0.400,
+        'VALOR_CONGELADO'
+    ),
+    (
+        5,
+        'PERDIDA_COMUNICACION',
+        'Perdida de comunicacion',
+        'NULIFICACION',
+        FALSE,
+        1,
+        24,
+        NULL,
+        NULL,
+        0.9000,
+        0.980,
+        'LECTURA_AUSENTE'
+    ),
+    (
+        6,
+        'SOBRECARGA',
+        'Sobrecarga de capacidad',
+        'INCREMENTO',
+        TRUE,
+        1,
+        6,
+        1.800,
+        3.000,
+        0.0150,
+        0.900,
+        'CARGA_CONTRATADA'
+    ),
+    (
+        7,
+        'MANTENIMIENTO',
+        'Mantenimiento programado',
+        'REDUCCION',
+        FALSE,
+        2,
+        8,
+        0.000,
+        0.250,
+        0.0200,
+        1.000,
+        'VENTANA_PROGRAMADA'
+    );
+
+
+-- ============================================================
+-- 7. PERFILES DE CARGA HORARIA
+-- ============================================================
+-- Resultado esperado:
+--
+-- 18 tipos de servicio
+-- x 3 tipos de dia
+-- x 24 horas
+-- = 1296 registros
+-- ============================================================
+
 WITH base AS (
     SELECT
         ts.id_tipo_servicio,
@@ -196,152 +391,318 @@ WITH base AS (
         ts.categoria,
         d.tipo_dia,
         h.hora,
-        CASE
-            -- Residencial: madrugada baja, picos matutino y nocturno.
-            WHEN ts.categoria = 'RESIDENCIAL' THEN
-                CASE
-                    WHEN h.hora BETWEEN 0 AND 5  THEN 0.42
-                    WHEN h.hora BETWEEN 6 AND 8  THEN 0.95
-                    WHEN h.hora BETWEEN 9 AND 13 THEN 0.62
-                    WHEN h.hora BETWEEN 14 AND 17 THEN 0.78
-                    WHEN h.hora BETWEEN 18 AND 22 THEN 1.72
-                    ELSE 0.86
-                END
-            -- Comercio: actividad diurna.
-            WHEN ts.categoria = 'COMERCIAL' THEN
-                CASE
-                    WHEN h.hora BETWEEN 0 AND 6  THEN 0.18
-                    WHEN h.hora BETWEEN 7 AND 8  THEN 0.70
-                    WHEN h.hora BETWEEN 9 AND 18 THEN 1.65
-                    WHEN h.hora BETWEEN 19 AND 21 THEN 0.75
-                    ELSE 0.25
-                END
-            -- Alumbrado: encendido nocturno.
-            WHEN ts.categoria = 'ALUMBRADO' THEN
-                CASE
-                    WHEN h.hora BETWEEN 0 AND 5  THEN 1.70
-                    WHEN h.hora BETWEEN 6 AND 17 THEN 0.03
-                    ELSE 1.75
-                END
-            -- Movilidad: operación continua con horas pico.
-            WHEN ts.categoria = 'MOVILIDAD' THEN
-                CASE
-                    WHEN h.hora BETWEEN 6 AND 9  THEN 1.35
-                    WHEN h.hora BETWEEN 17 AND 21 THEN 1.40
-                    WHEN h.hora BETWEEN 0 AND 4  THEN 0.55
-                    ELSE 0.95
-                END
-            -- Bombeo/agua: operación estable con refuerzo nocturno.
-            WHEN ts.categoria = 'SERVICIO' THEN
-                CASE
-                    WHEN h.hora BETWEEN 0 AND 5 THEN 1.25
-                    WHEN h.hora BETWEEN 6 AND 17 THEN 0.90
-                    ELSE 1.05
-                END
-            -- Tipos públicos con curvas diferenciadas.
-            WHEN ts.clave = 'MERCADO' THEN
-                CASE
-                    WHEN h.hora BETWEEN 0 AND 4 THEN 0.28
-                    WHEN h.hora BETWEEN 5 AND 7 THEN 1.12
-                    WHEN h.hora BETWEEN 8 AND 13 THEN 2.00
-                    WHEN h.hora BETWEEN 14 AND 17 THEN 0.92
-                    ELSE 0.31
-                END
-            WHEN ts.clave = 'ESCUELA' THEN
-                CASE
-                    WHEN h.hora BETWEEN 0 AND 5 THEN 0.12
-                    WHEN h.hora BETWEEN 6 AND 7 THEN 0.70
-                    WHEN h.hora BETWEEN 8 AND 14 THEN 2.10
-                    WHEN h.hora BETWEEN 15 AND 18 THEN 0.65
-                    ELSE 0.18
-                END
-            WHEN ts.clave IN ('CLINICA','HOSPITAL') THEN
-                CASE
-                    WHEN h.hora BETWEEN 0 AND 5 THEN 0.82
-                    WHEN h.hora BETWEEN 6 AND 17 THEN 1.12
-                    ELSE 0.98
-                END
-            WHEN ts.clave IN ('EDIF_GOB','BIBLIOTECA','CTRO_CULT') THEN
-                CASE
-                    WHEN h.hora BETWEEN 0 AND 6 THEN 0.12
-                    WHEN h.hora BETWEEN 7 AND 8 THEN 0.65
-                    WHEN h.hora BETWEEN 9 AND 17 THEN 1.95
-                    WHEN h.hora BETWEEN 18 AND 20 THEN 0.65
-                    ELSE 0.18
-                END
-            WHEN ts.clave IN ('CTRO_DEP','PARQUE') THEN
-                CASE
-                    WHEN h.hora BETWEEN 0 AND 5 THEN 0.28
-                    WHEN h.hora BETWEEN 6 AND 11 THEN 0.75
-                    WHEN h.hora BETWEEN 12 AND 16 THEN 1.05
-                    WHEN h.hora BETWEEN 17 AND 22 THEN 1.65
-                    ELSE 0.45
-                END
-            ELSE 1.00
-        END
+
+        (
+            CASE
+                -- Residencial
+                WHEN ts.categoria = 'RESIDENCIAL' THEN
+                    CASE
+                        WHEN h.hora BETWEEN 0 AND 5 THEN 0.42
+                        WHEN h.hora BETWEEN 6 AND 8 THEN 0.95
+                        WHEN h.hora BETWEEN 9 AND 13 THEN 0.62
+                        WHEN h.hora BETWEEN 14 AND 17 THEN 0.78
+                        WHEN h.hora BETWEEN 18 AND 22 THEN 1.72
+                        ELSE 0.86
+                    END
+
+                -- Comercial
+                WHEN ts.categoria = 'COMERCIAL' THEN
+                    CASE
+                        WHEN h.hora BETWEEN 0 AND 6 THEN 0.18
+                        WHEN h.hora BETWEEN 7 AND 8 THEN 0.70
+                        WHEN h.hora BETWEEN 9 AND 18 THEN 1.65
+                        WHEN h.hora BETWEEN 19 AND 21 THEN 0.75
+                        ELSE 0.25
+                    END
+
+                -- Alumbrado publico
+                WHEN ts.categoria = 'ALUMBRADO' THEN
+                    CASE
+                        WHEN h.hora BETWEEN 0 AND 5 THEN 1.70
+                        WHEN h.hora BETWEEN 6 AND 17 THEN 0.03
+                        ELSE 1.75
+                    END
+
+                -- Movilidad
+                WHEN ts.categoria = 'MOVILIDAD' THEN
+                    CASE
+                        WHEN h.hora BETWEEN 6 AND 9 THEN 1.35
+                        WHEN h.hora BETWEEN 17 AND 21 THEN 1.40
+                        WHEN h.hora BETWEEN 0 AND 4 THEN 0.55
+                        ELSE 0.95
+                    END
+
+                -- Agua y bombeo
+                WHEN ts.categoria = 'SERVICIO' THEN
+                    CASE
+                        WHEN h.hora BETWEEN 0 AND 5 THEN 1.25
+                        WHEN h.hora BETWEEN 6 AND 17 THEN 0.90
+                        ELSE 1.05
+                    END
+
+                -- Mercado
+                WHEN ts.clave = 'MERCADO' THEN
+                    CASE
+                        WHEN h.hora BETWEEN 0 AND 4 THEN 0.28
+                        WHEN h.hora BETWEEN 5 AND 7 THEN 1.12
+                        WHEN h.hora BETWEEN 8 AND 13 THEN 2.00
+                        WHEN h.hora BETWEEN 14 AND 17 THEN 0.92
+                        ELSE 0.31
+                    END
+
+                -- Escuela
+                WHEN ts.clave = 'ESCUELA' THEN
+                    CASE
+                        WHEN h.hora BETWEEN 0 AND 5 THEN 0.12
+                        WHEN h.hora BETWEEN 6 AND 7 THEN 0.70
+                        WHEN h.hora BETWEEN 8 AND 14 THEN 2.10
+                        WHEN h.hora BETWEEN 15 AND 18 THEN 0.65
+                        ELSE 0.18
+                    END
+
+                -- Clinicas y hospitales
+                WHEN ts.clave IN ('CLINICA', 'HOSPITAL') THEN
+                    CASE
+                        WHEN h.hora BETWEEN 0 AND 5 THEN 0.82
+                        WHEN h.hora BETWEEN 6 AND 17 THEN 1.12
+                        ELSE 0.98
+                    END
+
+                -- Gobierno, biblioteca y cultura
+                WHEN ts.clave IN (
+                    'EDIF_GOB',
+                    'BIBLIOTECA',
+                    'CTRO_CULT'
+                ) THEN
+                    CASE
+                        WHEN h.hora BETWEEN 0 AND 6 THEN 0.12
+                        WHEN h.hora BETWEEN 7 AND 8 THEN 0.65
+                        WHEN h.hora BETWEEN 9 AND 17 THEN 1.95
+                        WHEN h.hora BETWEEN 18 AND 20 THEN 0.65
+                        ELSE 0.18
+                    END
+
+                -- Deportivo y parques
+                WHEN ts.clave IN ('CTRO_DEP', 'PARQUE') THEN
+                    CASE
+                        WHEN h.hora BETWEEN 0 AND 5 THEN 0.28
+                        WHEN h.hora BETWEEN 6 AND 11 THEN 0.75
+                        WHEN h.hora BETWEEN 12 AND 16 THEN 1.05
+                        WHEN h.hora BETWEEN 17 AND 22 THEN 1.65
+                        ELSE 0.45
+                    END
+
+                ELSE 1.00
+            END
+        )
         *
-        CASE
-            -- Fin de semana por familia de servicio.
-            WHEN d.tipo_dia = 'H' THEN 1.00
-            WHEN d.tipo_dia = 'S' AND ts.categoria = 'RESIDENCIAL' THEN 1.08
-            WHEN d.tipo_dia = 'D' AND ts.categoria = 'RESIDENCIAL' THEN 1.12
-            WHEN d.tipo_dia = 'S' AND ts.clave = 'ESCUELA' THEN 0.25
-            WHEN d.tipo_dia = 'D' AND ts.clave = 'ESCUELA' THEN 0.10
-            WHEN d.tipo_dia IN ('S','D') AND ts.clave IN ('EDIF_GOB','BIBLIOTECA') THEN 0.30
-            WHEN d.tipo_dia = 'D' AND ts.categoria = 'COMERCIAL' THEN 0.75
-            ELSE 1.00
-        END AS factor_bruto
-    FROM tipo_servicio ts
-    CROSS JOIN (VALUES ('H'::char(1)), ('S'::char(1)), ('D'::char(1))) d(tipo_dia)
-    CROSS JOIN generate_series(0, 23) h(hora)
-), normalizado AS (
+        (
+            CASE
+                -- Dia habil
+                WHEN d.tipo_dia = 'H' THEN 1.00
+
+                -- Residencial sabado
+                WHEN d.tipo_dia = 'S'
+                     AND ts.categoria = 'RESIDENCIAL'
+                THEN 1.08
+
+                -- Residencial domingo
+                WHEN d.tipo_dia = 'D'
+                     AND ts.categoria = 'RESIDENCIAL'
+                THEN 1.12
+
+                -- Escuela sabado
+                WHEN d.tipo_dia = 'S'
+                     AND ts.clave = 'ESCUELA'
+                THEN 0.25
+
+                -- Escuela domingo
+                WHEN d.tipo_dia = 'D'
+                     AND ts.clave = 'ESCUELA'
+                THEN 0.10
+
+                -- Gobierno y biblioteca fin de semana
+                WHEN d.tipo_dia IN ('S', 'D')
+                     AND ts.clave IN ('EDIF_GOB', 'BIBLIOTECA')
+                THEN 0.30
+
+                -- Comercio domingo
+                WHEN d.tipo_dia = 'D'
+                     AND ts.categoria = 'COMERCIAL'
+                THEN 0.75
+
+                ELSE 1.00
+            END
+        ) AS factor_bruto
+
+    FROM energia.tipo_servicio AS ts
+
+    CROSS JOIN (
+        VALUES
+            ('H'::CHAR(1)),
+            ('S'::CHAR(1)),
+            ('D'::CHAR(1))
+    ) AS d(tipo_dia)
+
+    CROSS JOIN generate_series(0, 23) AS h(hora)
+),
+
+normalizado AS (
     SELECT
         id_tipo_servicio,
         tipo_dia,
         hora,
         ROUND(
-            (factor_bruto * 24.0 /
-             SUM(factor_bruto) OVER (PARTITION BY id_tipo_servicio, tipo_dia))::numeric,
+            (
+                factor_bruto * 24.0
+                /
+                SUM(factor_bruto) OVER (
+                    PARTITION BY
+                        id_tipo_servicio,
+                        tipo_dia
+                )
+            )::NUMERIC,
             4
         ) AS factor
     FROM base
 )
-INSERT INTO perfil_carga_horaria (
-    id_tipo_servicio, tipo_dia, hora, factor
+
+INSERT INTO energia.perfil_carga_horaria (
+    id_tipo_servicio,
+    tipo_dia,
+    hora,
+    factor
 )
-SELECT id_tipo_servicio, tipo_dia, hora, factor
+SELECT
+    id_tipo_servicio,
+    tipo_dia,
+    hora,
+    factor
 FROM normalizado
-ON CONFLICT (id_tipo_servicio, tipo_dia, hora) DO UPDATE SET
-    factor = EXCLUDED.factor;
+ON CONFLICT (
+    id_tipo_servicio,
+    tipo_dia,
+    hora
+)
+DO UPDATE
+SET factor = EXCLUDED.factor;
+
+
+-- ============================================================
+-- 8. FINALIZAR TRANSACCION
+-- ============================================================
 
 COMMIT;
 
+
 -- ============================================================
--- 6. VALIDACIONES
+-- 9. VALIDACION DE CANTIDADES
 -- ============================================================
-SELECT 'zona' AS tabla, COUNT(*) AS filas FROM energia.zona
-UNION ALL SELECT 'tarifa', COUNT(*) FROM energia.tarifa
-UNION ALL SELECT 'tipo_servicio', COUNT(*) FROM energia.tipo_servicio
-UNION ALL SELECT 'tipo_evento', COUNT(*) FROM energia.tipo_evento
-UNION ALL SELECT 'perfil_carga_horaria', COUNT(*) FROM energia.perfil_carga_horaria
+
+SELECT
+    'zona' AS tabla,
+    COUNT(*) AS filas
+FROM energia.zona
+
+UNION ALL
+
+SELECT
+    'tarifa',
+    COUNT(*)
+FROM energia.tarifa
+
+UNION ALL
+
+SELECT
+    'tipo_servicio',
+    COUNT(*)
+FROM energia.tipo_servicio
+
+UNION ALL
+
+SELECT
+    'tipo_evento',
+    COUNT(*)
+FROM energia.tipo_evento
+
+UNION ALL
+
+SELECT
+    'perfil_carga_horaria',
+    COUNT(*)
+FROM energia.perfil_carga_horaria
+
 ORDER BY tabla;
 
--- Debe devolver 0 filas: cada curva debe sumar aproximadamente 24.
+
+-- ============================================================
+-- 10. VALIDAR SUMA DE PERFILES
+-- ============================================================
+-- Debe regresar 0 filas.
+-- Cada perfil debe sumar aproximadamente 24.
+-- ============================================================
+
 SELECT
     id_tipo_servicio,
     tipo_dia,
     SUM(factor) AS suma_factores
 FROM energia.perfil_carga_horaria
-GROUP BY id_tipo_servicio, tipo_dia
+GROUP BY
+    id_tipo_servicio,
+    tipo_dia
 HAVING ABS(SUM(factor) - 24.0) > 0.01
-ORDER BY id_tipo_servicio, tipo_dia;
+ORDER BY
+    id_tipo_servicio,
+    tipo_dia;
 
--- Debe devolver 0.
-SELECT COUNT(*) AS zonas_con_factor_fuera_de_rango
+
+-- ============================================================
+-- 11. VALIDAR FACTOR SOCIOECONOMICO
+-- ============================================================
+-- Debe regresar 0.
+-- ============================================================
+
+SELECT
+    COUNT(*) AS zonas_con_factor_fuera_de_rango
 FROM energia.zona
 WHERE factor_socioeconomico NOT BETWEEN 0.5 AND 2.0;
 
--- Debe devolver 0.
-SELECT COUNT(*) AS zonas_sin_superficie
+
+-- ============================================================
+-- 12. VALIDAR SUPERFICIES
+-- ============================================================
+-- Debe regresar 0.
+-- ============================================================
+
+SELECT
+    COUNT(*) AS zonas_sin_superficie
 FROM energia.zona
-WHERE superficie_km2 IS NULL OR superficie_km2 <= 0;
+WHERE superficie_km2 IS NULL
+   OR superficie_km2 <= 0;
+
+
+-- ============================================================
+-- 13. VALIDAR TOTAL DE ZONAS
+-- ============================================================
+-- Debe regresar 46.
+-- ============================================================
+
+SELECT
+    COUNT(*) AS total_zonas
+FROM energia.zona;
+
+
+-- ============================================================
+-- 14. VALIDAR TOTAL DE PERFILES
+-- ============================================================
+-- Debe regresar 1296.
+-- ============================================================
+
+SELECT
+    COUNT(*) AS total_perfiles
+FROM energia.perfil_carga_horaria;
+
+
+-- ============================================================
+-- FIN DE 02_catalogos.sql
+-- ============================================================
