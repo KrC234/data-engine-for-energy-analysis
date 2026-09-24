@@ -7,6 +7,12 @@
 #
 # Los catalogos de zonas, tarifas, tipos de servicio,
 # perfiles horarios y tipos de evento viven en PostgreSQL.
+#
+# IMPORTANTE:
+# - Latitud y longitud se guardan en energia.servicio.
+# - La altitud es una regla interna y NO se guarda en la base.
+# - Los festivos se definen manualmente para que la generacion
+#   sea reproducible y no dependa de servicios externos.
 # ============================================================
 
 
@@ -16,23 +22,13 @@
 
 services:
 
-  # Los 5,000 servicios se distribuyen entre las zonas según
+  # Los servicios se distribuyen entre las zonas según
   # el número de viviendas habitadas de energia.zona.
-  #
-  # Una zona con más viviendas recibe más servicios sintéticos.
   use_housing_weights: true
 
 
   # Distribución del padrón por categoría.
-  #
   # La suma debe ser exactamente 1.0.
-  #
-  # RESIDENCIAL: 78.0% de los servicios
-  # COMERCIAL:    7.1%
-  # PUBLICO:      3.0%
-  # SERVICIO:     1.4%, por ejemplo pozos y bombeo
-  # ALUMBRADO:    6.8%
-  # MOVILIDAD:    3.7%, por ejemplo semáforos
   category_distribution:
 
     RESIDENCIAL: 0.780
@@ -43,10 +39,7 @@ services:
     MOVILIDAD: 0.037
 
 
-  # Probabilidad de que un servicio tenga generación solar.
-  #
-  # 0.08 significa una probabilidad del 8%.
-  # Los circuitos de alumbrado y semáforos quedan en cero.
+  # Probabilidad de generación solar por categoría.
   solar_probability:
 
     RESIDENCIAL: 0.08
@@ -57,9 +50,7 @@ services:
     MOVILIDAD: 0.00
 
 
-  # Ocupación sintética para servicios residenciales.
-  #
-  # Cada vivienda tendrá entre 1 y 7 ocupantes.
+  # Ocupación sintética de los servicios residenciales.
   residential_occupancy:
 
     min: 1
@@ -67,9 +58,6 @@ services:
 
 
   # Carga contratada según categoría, expresada en kW.
-  #
-  # Esta carga se usa posteriormente para detectar eventos
-  # de sobrecarga.
   contracted_load_kw:
 
     RESIDENCIAL:
@@ -97,6 +85,79 @@ services:
       max: 5.0
 
 
+  # ==========================================================
+  # UBICACION GEOGRAFICA
+  # ==========================================================
+  #
+  # Estas coordenadas delimitan el escenario sintético.
+  #
+  # Los valores generados se almacenan en:
+  #
+  #   energia.servicio.latitud
+  #   energia.servicio.longitud
+  #
+  # La base ya acepta latitudes entre -90 y 90 y longitudes
+  # entre -180 y 180, por lo que estas reglas no requieren
+  # ninguna modificación en PostgreSQL.
+
+  geographic_location:
+
+    enabled: true
+
+    latitude:
+      min: 19.180000
+      max: 19.420000
+
+    longitude:
+      min: -99.780000
+      max: -99.550000
+
+    # Número de decimales que tendrá cada coordenada.
+    decimal_places: 6
+
+    # Evita que todos los servicios de una zona reciban
+    # exactamente la misma coordenada.
+    random_dispersion: true
+
+    # Distancia máxima aproximada de dispersión respecto
+    # al punto central asignado a una zona.
+    max_dispersion_km: 2.5
+
+
+  # ==========================================================
+  # ALTITUD
+  # ==========================================================
+  #
+  # La altitud se genera únicamente como variable auxiliar.
+  #
+  # NO se inserta en energia.servicio porque la tabla actual
+  # no contiene una columna llamada altitud.
+  #
+  # Por ahora se utiliza exclusivamente para ajustar
+  # ligeramente la temperatura sintética.
+
+  altitude:
+
+    enabled: true
+
+    min_meters: 2500
+    max_meters: 2900
+
+    # Altitud utilizada como referencia para calcular
+    # el ajuste de temperatura.
+    reference_meters: 2600
+
+    # La temperatura disminuye aproximadamente esta cantidad
+    # por cada 100 metros por encima de la referencia.
+    temperature_change_per_100m: -0.6
+
+    # Limita el ajuste para impedir temperaturas exageradas.
+    maximum_temperature_adjustment_c: 2.5
+
+    # La altitud no se guarda en PostgreSQL.
+    store_in_database: false
+
+
 # ============================================================
 # 2. MEDIDORES
 # ============================================================
@@ -104,9 +165,7 @@ services:
 meters:
 
   # Distribución de marcas sintéticas.
-  #
   # La suma debe ser exactamente 1.0.
-  # Estas marcas no representan fabricantes reales.
   brands:
 
     MEDISUR: 0.35
@@ -115,31 +174,18 @@ meters:
 
 
   # Calidad de comunicación del medidor.
-  #
-  # El esquema de PostgreSQL permite valores entre 50 y 100.
-  # Para el escenario normal generaremos valores entre 75 y 99.
-  #
-  # Un valor de 95 representa aproximadamente una calidad
-  # de enlace superior a un medidor con valor 75.
   link_quality:
 
     min: 75
     max: 99
 
 
-  # El factor socioeconómico de la zona también se utilizará
-  # para ajustar ligeramente la calidad del enlace.
-  #
-  # true significa que las zonas clasificadas como periféricas
-  # pueden obtener valores de enlace ligeramente menores.
+  # Permite reducir ligeramente la calidad de enlace
+  # en zonas clasificadas como periféricas.
   adjust_link_quality_by_zone: true
 
 
   # Distribución de multiplicadores.
-  #
-  # La mayoría de los servicios usa multiplicador 1.
-  # Los valores 20, 40 y 80 se reservan principalmente para
-  # servicios de mayor carga.
   multipliers:
 
     1: 0.94
@@ -154,45 +200,117 @@ meters:
 
 calendar:
 
-  # Rango de temperatura mínima y máxima para cada mes.
-  #
-  # Estos valores son parámetros del escenario sintético.
-  # El generador seleccionará un valor dentro del rango.
+  # ==========================================================
+  # TEMPERATURA
+  # ==========================================================
+
   temperature:
 
     january:
 
-      # Temperatura mínima diaria entre 3 y 8 grados Celsius.
       min_c: [3.0, 8.0]
-
-      # Temperatura máxima diaria entre 18 y 23 grados Celsius.
       max_c: [18.0, 23.0]
-
 
     february:
 
-      # Febrero presenta un aumento moderado de temperatura.
       min_c: [5.0, 10.0]
       max_c: [20.0, 26.0]
 
-
     march:
 
-      # Marzo presenta las temperaturas más altas del trimestre.
       min_c: [8.0, 14.0]
       max_c: [23.0, 30.0]
 
 
-  # Factor que modifica el consumo general según el mes.
-  #
-  # 1.08 significa que enero incrementa el consumo base 8%.
-  # 1.03 significa que febrero incrementa el consumo base 3%.
-  # 0.98 significa que marzo reduce el consumo base 2%.
+  # Si está habilitado, Calendario_Gen.py podrá modificar
+  # la temperatura de acuerdo con la altitud sintética.
+  adjust_temperature_by_altitude: true
+
+
+  # ==========================================================
+  # FACTOR ESTACIONAL
+  # ==========================================================
+
   seasonal_factor:
 
     january: 1.08
     february: 1.03
     march: 0.98
+
+
+  # ==========================================================
+  # TIPOS DE DIA
+  # ==========================================================
+  #
+  # Estos códigos coinciden exactamente con las restricciones
+  # existentes en energia.calendario y en
+  # energia.perfil_carga_horaria.
+  #
+  # H = día hábil
+  # S = sábado
+  # D = domingo o festivo
+  #
+  # Los festivos utilizan D aunque ocurran entre semana.
+
+  day_types:
+
+    weekday: "H"
+    saturday: "S"
+    sunday_or_holiday: "D"
+
+
+  # ==========================================================
+  # DIAS FESTIVOS
+  # ==========================================================
+  #
+  # Estas fechas se definen manualmente como parte del
+  # escenario sintético.
+  #
+  # No se consulta ningún calendario externo durante
+  # la ejecución.
+
+  holidays:
+
+    enabled: true
+
+    dates:
+
+      - date: "2026-01-01"
+        name: "Inicio de año"
+
+      - date: "2026-02-02"
+        name: "Festivo de febrero"
+
+      - date: "2026-03-16"
+        name: "Festivo de marzo"
+
+    # Todo festivo se clasifica como tipo de día D.
+    day_type: "D"
+
+
+  # ==========================================================
+  # PERIODOS VACACIONALES
+  # ==========================================================
+  #
+  # Una fecha puede ser festiva y vacacional al mismo tiempo.
+  #
+  # Esta regla se utilizará para llenar la columna:
+  #
+  #   energia.calendario.es_vacacional
+
+  vacation_periods:
+
+    enabled: true
+
+    periods:
+
+      - name: "Vacaciones de invierno"
+        start_date: "2026-01-01"
+        end_date: "2026-01-06"
+
+      - name: "Vacaciones de primavera"
+        start_date: "2026-03-30"
+        end_date: "2026-03-31"
 
 
 # ============================================================
@@ -201,20 +319,11 @@ calendar:
 
 consumption:
 
-  # Límite inferior permitido.
   # Ninguna lectura real puede ser negativa.
   minimum_kwh: 0.0
 
 
-  # Limita el ruido aleatorio alrededor del consumo esperado.
-  #
-  # El factor se seleccionará entre 0.90 y 1.10.
-  #
-  # Ejemplo:
-  # consumo esperado = 1.000 kWh
-  #
-  # consumo generado mínimo aproximado = 0.900 kWh
-  # consumo generado máximo aproximado = 1.100 kWh
+  # Factor pseudoaleatorio alrededor del consumo esperado.
   random_factor:
 
     min: 0.90
@@ -223,23 +332,26 @@ consumption:
 
   # Determina si el factor socioeconómico de energia.zona
   # modifica el consumo.
-  #
-  # Ejemplo:
-  # consumo base       = 0.350
-  # factor de zona     = 1.500
-  #
-  # consumo ajustado   = 0.350 x 1.500
   use_socioeconomic_factor: true
 
 
-  # Determina si el factor mensual almacenado en calendario
-  # modifica el consumo.
+  # Determina si el factor estacional almacenado en
+  # energia.calendario modifica el consumo.
   use_seasonal_factor: true
 
 
-  # Determina si se utiliza el perfil horario almacenado en
-  # energia.perfil_carga_horaria.
+  # Determina si se utiliza energia.perfil_carga_horaria.
   use_hourly_profile: true
+
+
+  # Permite que la temperatura afecte el consumo según
+  # sensibilidad_temp de energia.tipo_servicio.
+  use_temperature_factor: true
+
+
+  # La altitud no multiplica directamente el consumo.
+  # Solo modifica la temperatura sintética.
+  use_altitude_directly: false
 
 
 # ============================================================
@@ -248,15 +360,13 @@ consumption:
 
 solar:
 
-  # Horas en las que se aplica una reducción de consumo neto
-  # a los servicios que tienen generación solar.
+  # Horas durante las que puede aplicarse reducción
+  # del consumo neto.
   start_hour: 9
   end_hour: 17
 
 
   # Reducción del consumo durante las horas solares.
-  #
-  # El valor se seleccionará entre 15% y 45%.
   reduction:
 
     min: 0.15
