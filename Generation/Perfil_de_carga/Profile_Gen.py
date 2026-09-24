@@ -14,7 +14,7 @@ def readJSON(path):
 # Parametros de Inicio 
 horas_array = np.arange(24)   
 reglas = readJSON("Rules/Rules.json")
-servicios = readJSON("Test/Testing_data/Tipo_servicio.json");
+servicios = readJSON("Test/Testing_rows/Tipo_servicio.json");
 
 # Funciones matemáticas
 def generar_curva_gaussiana(horas, centro, ancho, base, amplitud):
@@ -64,7 +64,7 @@ def generacion():
             # Generar los registros individuales para la BD
             for hora in range(24):
                 registros.append({
-                    "ID": servicio["id"],
+                    "ID": servicio["id_servicio"],
                     "Tipo de día": tipo_dia,
                     "Hora": int(hora),
                     "Factor": float(curva_normalizada[hora])

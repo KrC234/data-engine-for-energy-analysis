@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
     ASIGNACIÓN DE DISPOSITIVOS  
     Autor: Aalan Kalid Ruíz Colín 
 '''
+ARCHIVO_SALIDA = "Test/Testting_results/Dispositivos_generados.csv"
+
+
 def readJSON(path):
     try:
         with open(path, 'r', encoding='utf-8') as f:
@@ -43,7 +46,7 @@ def generar_num_serie(prefijo,modelo,lote,secuencial,checksum):
     return f"{prefijo}-{modelo}-{lote}-{secuencial}-{checksum}"
 
 
-def generar_simulacion_n_marcas(config, servicios):
+def generar_simulacion_marcas(config, servicios):
     
     lista_marcas = config["dispositivos"]
     dataset = []
@@ -87,8 +90,20 @@ def generar_simulacion_n_marcas(config, servicios):
 
 config_dispositivos = readJSON("Rules/Dispositivos.json")
 
+
 # Genera los 1000 registros incluyendo las 3 marcas (o N marcas si agregas más al JSON)
-registros_simulados = generar_simulacion_n_marcas(config_dispositivos, df_servicios.itertuples())
+registros_simulados = generar_simulacion_marcas(config_dispositivos, df_servicios.itertuples())
 
 for registro in registros_simulados:
     print(registro)
+
+# Genera los registros mapeando desde el generador de tuples
+registros_simulados = generar_simulacion_marcas(config_dispositivos, df_servicios.itertuples())
+if __name__ =='__main__':
+    datos = registros_simulados
+    
+    df = pd.DataFrame(datos)
+    
+    df.to_csv(ARCHIVO_SALIDA, index=False, encoding='utf-8')
+    
+

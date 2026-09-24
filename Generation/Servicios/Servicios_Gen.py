@@ -2,11 +2,7 @@ import json
 import random 
 import pandas as pd 
 
-'''
-    ASIGNACIÓN DE SERVICIOS 
-    Autor: Aalan Kalid Ruíz Colín 
-    Recomendación: Instalar el plugin Better Comments de VS code 
-'''
+
 
 # Leer archivos JSON (de registro y de configuración) 
 def readJSON(path):
