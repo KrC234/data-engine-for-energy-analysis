@@ -11,35 +11,35 @@
       "tipo_urbano": "RESIDENCIAL_MEDIA",
       "superficie_km2": 3.480,
       "factor_socioeconomico": 1.040,
-      "n_servicios_previstos": 0,
+      "n_servicios_previstos": 210,
       "notas": "Zona ancla de la propuesta."
     },
     {
       "id_zona": 8,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre segun RD-06 y definir caracter urbano distinto al de la zona 2."
+      "nombre": "Centro de Tzompantepec",
+      "tipo_urbano": "CENTRO",
+      "superficie_km2": 2.150,
+      "factor_socioeconomico": 1.180,
+      "n_servicios_previstos": 220,
+      "notas": "Nombre compuesto para el escenario ficticio de Nexpahuacán. Zona de carácter central, con mayor concentración de actividad comercial y de servicios."
     },
     {
       "id_zona": 14,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 2 y 8."
+      "nombre": "Barrio Xochitlalpan",
+      "tipo_urbano": "POPULAR",
+      "superficie_km2": 1.950,
+      "factor_socioeconomico": 0.820,
+      "n_servicios_previstos": 230,
+      "notas": "Nombre compuesto para el escenario ficticio de Nexpahuacán. Zona popular de mayor densidad relativa y factor socioeconomico menor al promedio."
     },
     {
       "id_zona": 20,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 2, 8 y 14."
+      "nombre": "Periferia Yancuitlalpan",
+      "tipo_urbano": "PERIFERIA",
+      "superficie_km2": 4.750,
+      "factor_socioeconomico": 0.680,
+      "n_servicios_previstos": 173,
+      "notas": "Nombre compuesto para el escenario ficticio de Nexpahuacán. Zona periférica de mayor superficie y menor factor socioeconomico."
     }
   ],
   "mejoras_reglas_propuestas": {
