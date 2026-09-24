@@ -7,39 +7,39 @@
   "zonas": [
     {
       "id_zona": 4,
-      "nombre": "Fraccionamiento Villas de Ocoyotenco",
+      "nombre": "San Lorenzo Tepaltitlán",
       "tipo_urbano": "RESIDENCIAL_ALTA",
       "superficie_km2": 4.120,
-      "factor_socioeconomico": 1.620,
-      "n_servicios_previstos": 0,
+      "factor_socioeconomico": 0.875,
+      "n_servicios_previstos": 70,
       "notas": "Zona ancla de la propuesta. Consumo alto por servicio."
     },
     {
       "id_zona": 10,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre segun RD-06 y definir caracter urbano distinto al de la zona 4."
+      "nombre": "San Mateo Otzacatipan",
+      "tipo_urbano": "POPULAR",
+      "superficie_km2": 12.850,
+      "factor_socioeconomico": 1.232,
+      "n_servicios_previstos": 45,
+      "notas": "Nombre compuesto segun RD-06. Caracter urbano POPULAR, distinto a la zona 4."
     },
     {
       "id_zona": 16,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 4 y 10."
+      "nombre": "Santa Cruz Atzcapotzaltongo",
+      "tipo_urbano": "RESIDENCIAL_MEDIO",
+      "superficie_km2": 5.400,
+      "factor_socioeconomico": 1.616,
+      "n_servicios_previstos": 45,
+      "notas": "Nombre compuesto segun RD-06. Caracter RESIDENCIAL_MEDIO, distinto a las zonas 4 y 10."
     },
     {
       "id_zona": 22,
-      "nombre": "",
-      "tipo_urbano": "PENDIENTE",
-      "superficie_km2": 0,
-      "factor_socioeconomico": 0,
-      "n_servicios_previstos": 0,
-      "notas": "Componer nombre y definir caracter distinto al de las zonas 4, 10 y 16."
+      "nombre": "San Juan Tilapa",
+      "tipo_urbano": "PERIFERIA",
+      "superficie_km2": 6.750,
+      "factor_socioeconomico": 1.189,
+      "n_servicios_previstos": 45,
+      "notas": "Nombre compuesto segun RD-06. Caracter PERIFERIA, distinto a las zonas 4, 10 y 16."
     }
   ],
   "mejoras_reglas_propuestas": {
