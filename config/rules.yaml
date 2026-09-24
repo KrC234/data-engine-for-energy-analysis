@@ -1,0 +1,373 @@
+# ============================================================
+# REGLAS DE GENERACION
+# HyperDataSynthetic
+#
+# Contiene solamente reglas utilizadas directamente por
+# los generadores Python.
+#
+# Los catalogos de zonas, tarifas, tipos de servicio,
+# perfiles horarios y tipos de evento viven en PostgreSQL.
+#
+# IMPORTANTE:
+# - Latitud y longitud se guardan en energia.servicio.
+# - La altitud es una regla interna y NO se guarda en la base.
+# - Los festivos se definen manualmente para que la generacion
+#   sea reproducible y no dependa de servicios externos.
+# ============================================================
+
+
+# ============================================================
+# 1. DISTRIBUCION DE SERVICIOS
+# ============================================================
+
+services:
+
+  # Los servicios se distribuyen entre las zonas según
+  # el número de viviendas habitadas de energia.zona.
+  use_housing_weights: true
+
+
+  # Distribución del padrón por categoría.
+  # La suma debe ser exactamente 1.0.
+  category_distribution:
+
+    RESIDENCIAL: 0.780
+    COMERCIAL: 0.071
+    PUBLICO: 0.030
+    SERVICIO: 0.014
+    ALUMBRADO: 0.068
+    MOVILIDAD: 0.037
+
+
+  # Probabilidad de generación solar por categoría.
+  solar_probability:
+
+    RESIDENCIAL: 0.08
+    COMERCIAL: 0.12
+    PUBLICO: 0.15
+    SERVICIO: 0.05
+    ALUMBRADO: 0.00
+    MOVILIDAD: 0.00
+
+
+  # Ocupación sintética de los servicios residenciales.
+  residential_occupancy:
+
+    min: 1
+    max: 7
+
+
+  # Carga contratada según categoría, expresada en kW.
+  contracted_load_kw:
+
+    RESIDENCIAL:
+      min: 1.5
+      max: 12.0
+
+    COMERCIAL:
+      min: 5.0
+      max: 60.0
+
+    PUBLICO:
+      min: 15.0
+      max: 250.0
+
+    SERVICIO:
+      min: 50.0
+      max: 350.0
+
+    ALUMBRADO:
+      min: 10.0
+      max: 120.0
+
+    MOVILIDAD:
+      min: 0.5
+      max: 5.0
+
+
+  # ==========================================================
+  # UBICACION GEOGRAFICA
+  # ==========================================================
+  #
+  # Estas coordenadas delimitan el escenario sintético.
+  #
+  # Los valores generados se almacenan en:
+  #
+  #   energia.servicio.latitud
+  #   energia.servicio.longitud
+  #
+  # La base ya acepta latitudes entre -90 y 90 y longitudes
+  # entre -180 y 180, por lo que estas reglas no requieren
+  # ninguna modificación en PostgreSQL.
+
+  geographic_location:
+
+    enabled: true
+
+    latitude:
+      min: 19.180000
+      max: 19.420000
+
+    longitude:
+      min: -99.780000
+      max: -99.550000
+
+    # Número de decimales que tendrá cada coordenada.
+    decimal_places: 6
+
+    # Evita que todos los servicios de una zona reciban
+    # exactamente la misma coordenada.
+    random_dispersion: true
+
+    # Distancia máxima aproximada de dispersión respecto
+    # al punto central asignado a una zona.
+    max_dispersion_km: 2.5
+
+
+  # ==========================================================
+  # ALTITUD
+  # ==========================================================
+  #
+  # La altitud se genera únicamente como variable auxiliar.
+  #
+  # NO se inserta en energia.servicio porque la tabla actual
+  # no contiene una columna llamada altitud.
+  #
+  # Por ahora se utiliza exclusivamente para ajustar
+  # ligeramente la temperatura sintética.
+
+  altitude:
+
+    enabled: true
+
+    min_meters: 2500
+    max_meters: 2900
+
+    # Altitud utilizada como referencia para calcular
+    # el ajuste de temperatura.
+    reference_meters: 2600
+
+    # La temperatura disminuye aproximadamente esta cantidad
+    # por cada 100 metros por encima de la referencia.
+    temperature_change_per_100m: -0.6
+
+    # Limita el ajuste para impedir temperaturas exageradas.
+    maximum_temperature_adjustment_c: 2.5
+
+    # La altitud no se guarda en PostgreSQL.
+    store_in_database: false
+
+
+# ============================================================
+# 2. MEDIDORES
+# ============================================================
+
+meters:
+
+  # Distribución de marcas sintéticas.
+  # La suma debe ser exactamente 1.0.
+  brands:
+
+    MEDISUR: 0.35
+    KRONOS: 0.35
+    NOVAMET: 0.30
+
+
+  # Calidad de comunicación del medidor.
+  link_quality:
+
+    min: 75
+    max: 99
+
+
+  # Permite reducir ligeramente la calidad de enlace
+  # en zonas clasificadas como periféricas.
+  adjust_link_quality_by_zone: true
+
+
+  # Distribución de multiplicadores.
+  multipliers:
+
+    1: 0.94
+    20: 0.03
+    40: 0.02
+    80: 0.01
+
+
+# ============================================================
+# 3. CALENDARIO Y TEMPERATURA
+# ============================================================
+
+calendar:
+
+  # ==========================================================
+  # TEMPERATURA
+  # ==========================================================
+
+  temperature:
+
+    january:
+
+      min_c: [3.0, 8.0]
+      max_c: [18.0, 23.0]
+
+    february:
+
+      min_c: [5.0, 10.0]
+      max_c: [20.0, 26.0]
+
+    march:
+
+      min_c: [8.0, 14.0]
+      max_c: [23.0, 30.0]
+
+
+  # Si está habilitado, Calendario_Gen.py podrá modificar
+  # la temperatura de acuerdo con la altitud sintética.
+  adjust_temperature_by_altitude: true
+
+
+  # ==========================================================
+  # FACTOR ESTACIONAL
+  # ==========================================================
+
+  seasonal_factor:
+
+    january: 1.08
+    february: 1.03
+    march: 0.98
+
+
+  # ==========================================================
+  # TIPOS DE DIA
+  # ==========================================================
+  #
+  # Estos códigos coinciden exactamente con las restricciones
+  # existentes en energia.calendario y en
+  # energia.perfil_carga_horaria.
+  #
+  # H = día hábil
+  # S = sábado
+  # D = domingo o festivo
+  #
+  # Los festivos utilizan D aunque ocurran entre semana.
+
+  day_types:
+
+    weekday: "H"
+    saturday: "S"
+    sunday_or_holiday: "D"
+
+
+  # ==========================================================
+  # DIAS FESTIVOS
+  # ==========================================================
+  #
+  # Estas fechas se definen manualmente como parte del
+  # escenario sintético.
+  #
+  # No se consulta ningún calendario externo durante
+  # la ejecución.
+
+  holidays:
+
+    enabled: true
+
+    dates:
+
+      - date: "2026-01-01"
+        name: "Inicio de año"
+
+      - date: "2026-02-02"
+        name: "Festivo de febrero"
+
+      - date: "2026-03-16"
+        name: "Festivo de marzo"
+
+    # Todo festivo se clasifica como tipo de día D.
+    day_type: "D"
+
+
+  # ==========================================================
+  # PERIODOS VACACIONALES
+  # ==========================================================
+  #
+  # Una fecha puede ser festiva y vacacional al mismo tiempo.
+  #
+  # Esta regla se utilizará para llenar la columna:
+  #
+  #   energia.calendario.es_vacacional
+
+  vacation_periods:
+
+    enabled: true
+
+    periods:
+
+      - name: "Vacaciones de invierno"
+        start_date: "2026-01-01"
+        end_date: "2026-01-06"
+
+      - name: "Vacaciones de primavera"
+        start_date: "2026-03-30"
+        end_date: "2026-03-31"
+
+
+# ============================================================
+# 4. VARIACION DEL CONSUMO
+# ============================================================
+
+consumption:
+
+  # Ninguna lectura real puede ser negativa.
+  minimum_kwh: 0.0
+
+
+  # Factor pseudoaleatorio alrededor del consumo esperado.
+  random_factor:
+
+    min: 0.90
+    max: 1.10
+
+
+  # Determina si el factor socioeconómico de energia.zona
+  # modifica el consumo.
+  use_socioeconomic_factor: true
+
+
+  # Determina si el factor estacional almacenado en
+  # energia.calendario modifica el consumo.
+  use_seasonal_factor: true
+
+
+  # Determina si se utiliza energia.perfil_carga_horaria.
+  use_hourly_profile: true
+
+
+  # Permite que la temperatura afecte el consumo según
+  # sensibilidad_temp de energia.tipo_servicio.
+  use_temperature_factor: true
+
+
+  # La altitud no multiplica directamente el consumo.
+  # Solo modifica la temperatura sintética.
+  use_altitude_directly: false
+
+
+# ============================================================
+# 5. GENERACION SOLAR
+# ============================================================
+
+solar:
+
+  # Horas durante las que puede aplicarse reducción
+  # del consumo neto.
+  start_hour: 9
+  end_hour: 17
+
+
+  # Reducción del consumo durante las horas solares.
+  reduction:
+
+    min: 0.15
+    max: 0.45

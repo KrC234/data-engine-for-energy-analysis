@@ -7,3 +7,11 @@ Generation/Resultados/
 Main.py
 
 Generation/Perfil_de_carga/__pycache__
+# JARVIS HSD pipeline
+.env
+datamart_csv/
+bi/.metabase_pwd
+
+!main.py
+
+__pycache__/

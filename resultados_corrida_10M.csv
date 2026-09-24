@@ -1,0 +1,150 @@
+﻿seccion,elemento,valor,unidad
+corrida,fecha_ejecucion,2026-09-23,
+corrida,escenario,5000 servicios x 90 dias,2026-01-01 a 2026-03-31
+corrida,duracion_generacion,82,segundos
+corrida,validacion,PASO,">= 10,000,000 registros"
+corrida,semilla,20260101,
+conteo_tabla,calendario,90,registros
+conteo_tabla,zona,46,registros
+conteo_tabla,tipo_servicio,18,registros
+conteo_tabla,tarifa,7,registros
+conteo_tabla,servicio,5000,registros
+conteo_tabla,medidor,5260,registros
+conteo_tabla,perfil_carga_horaria,1296,registros
+conteo_tabla,evento,7296,registros
+conteo_tabla,alerta,7136,registros
+conteo_tabla,periodo_facturacion,15000,registros
+conteo_tabla,lectura,10800000,registros
+consumo_total,consumo_real,38593166.36,kWh
+consumo_total,consumo_facturado,38451823.96,kWh
+consumo_total,kwh_desviados_por_eventos,207517.78,kWh
+consumo_total,eventos,7,registros
+evento_por_tipo,PERDIDA_COMUNICACION,5000,eventos; 0.00 kWh desviados
+evento_por_tipo,PICO_DEMANDA,920,eventos; 24804.14 kWh desviados
+evento_por_tipo,CONSUMO_ANOMALO,583,eventos; 125108.08 kWh desviados
+evento_por_tipo,MANTENIMIENTO,320,eventos; 3835.60 kWh desviados
+evento_por_tipo,SOBRECARGA,214,eventos; 5398.53 kWh desviados
+evento_por_tipo,FALLA_MEDIDOR,149,eventos; 0.00 kWh desviados
+evento_por_tipo,MANIPULACION,110,eventos; 48371.44 kWh desviados
+alerta_por_prioridad,prioridad_1,6380,alertas
+alerta_por_prioridad,prioridad_2,358,alertas
+alerta_por_prioridad,prioridad_3,59,alertas
+alerta_por_prioridad,prioridad_4,339,alertas
+consumo_por_tipo_servicio,ALUMB_PUB,9499158.3,kWh
+consumo_por_tipo_servicio,BOMBEO,6098015.9,kWh
+consumo_por_tipo_servicio,POZO_AGUA,5594572.7,kWh
+consumo_por_tipo_servicio,HOSPITAL,5582232.2,kWh
+consumo_por_tipo_servicio,VIV_RESID,3251046.7,kWh
+consumo_por_tipo_servicio,COM_LOCAL,1347174.1,kWh
+consumo_por_tipo_servicio,VIV_UNIF,1142057.5,kWh
+consumo_por_tipo_servicio,MERCADO,1085695.4,kWh
+consumo_por_tipo_servicio,EDIF_GOB,822272.8,kWh
+consumo_por_tipo_servicio,CLINICA,783460.0,kWh
+consumo_por_tipo_servicio,VIV_DEPTO,747334.9,kWh
+consumo_por_tipo_servicio,CTRO_DEP,665618.2,kWh
+consumo_por_tipo_servicio,VIV_SOCIAL,642217.3,kWh
+consumo_por_tipo_servicio,ESCUELA,453449.2,kWh
+consumo_por_tipo_servicio,SEMAFORO,252108.9,kWh
+consumo_por_tipo_servicio,CTRO_CULT,220681.5,kWh
+consumo_por_tipo_servicio,PARQUE,207826.9,kWh
+consumo_por_tipo_servicio,BIBLIOTECA,198243.8,kWh
+consumo_diario,2026-01-01,447542.1,kWh
+consumo_diario,2026-01-02,448257.3,kWh
+consumo_diario,2026-01-03,447564.3,kWh
+consumo_diario,2026-01-04,447066.5,kWh
+consumo_diario,2026-01-05,447434.8,kWh
+consumo_diario,2026-01-06,445794.1,kWh
+consumo_diario,2026-01-07,445751.1,kWh
+consumo_diario,2026-01-08,446288.7,kWh
+consumo_diario,2026-01-09,446422.3,kWh
+consumo_diario,2026-01-10,447826.0,kWh
+consumo_diario,2026-01-11,447561.5,kWh
+consumo_diario,2026-01-12,449150.9,kWh
+consumo_diario,2026-01-13,448725.3,kWh
+consumo_diario,2026-01-14,449780.4,kWh
+consumo_diario,2026-01-15,444514.4,kWh
+consumo_diario,2026-01-16,448067.7,kWh
+consumo_diario,2026-01-17,447744.4,kWh
+consumo_diario,2026-01-18,447084.2,kWh
+consumo_diario,2026-01-19,446222.1,kWh
+consumo_diario,2026-01-20,445343.2,kWh
+consumo_diario,2026-01-21,446315.1,kWh
+consumo_diario,2026-01-22,444246.9,kWh
+consumo_diario,2026-01-23,446306.7,kWh
+consumo_diario,2026-01-24,446786.7,kWh
+consumo_diario,2026-01-25,447998.6,kWh
+consumo_diario,2026-01-26,445129.4,kWh
+consumo_diario,2026-01-27,446937.4,kWh
+consumo_diario,2026-01-28,447435.1,kWh
+consumo_diario,2026-01-29,449071.2,kWh
+consumo_diario,2026-01-30,447096.5,kWh
+consumo_diario,2026-01-31,447427.2,kWh
+consumo_diario,2026-02-01,425835.5,kWh
+consumo_diario,2026-02-02,428016.0,kWh
+consumo_diario,2026-02-03,427793.7,kWh
+consumo_diario,2026-02-04,427857.6,kWh
+consumo_diario,2026-02-05,426204.2,kWh
+consumo_diario,2026-02-06,428645.9,kWh
+consumo_diario,2026-02-07,428698.2,kWh
+consumo_diario,2026-02-08,428235.3,kWh
+consumo_diario,2026-02-09,428260.4,kWh
+consumo_diario,2026-02-10,426670.0,kWh
+consumo_diario,2026-02-11,428385.0,kWh
+consumo_diario,2026-02-12,428746.1,kWh
+consumo_diario,2026-02-13,428323.2,kWh
+consumo_diario,2026-02-14,429884.6,kWh
+consumo_diario,2026-02-15,425130.5,kWh
+consumo_diario,2026-02-16,428111.9,kWh
+consumo_diario,2026-02-17,428551.6,kWh
+consumo_diario,2026-02-18,427659.6,kWh
+consumo_diario,2026-02-19,427555.5,kWh
+consumo_diario,2026-02-20,429936.1,kWh
+consumo_diario,2026-02-21,426619.8,kWh
+consumo_diario,2026-02-22,428863.6,kWh
+consumo_diario,2026-02-23,428902.3,kWh
+consumo_diario,2026-02-24,428496.1,kWh
+consumo_diario,2026-02-25,429836.4,kWh
+consumo_diario,2026-02-26,427279.9,kWh
+consumo_diario,2026-02-27,429483.4,kWh
+consumo_diario,2026-02-28,427101.7,kWh
+consumo_diario,2026-03-01,412922.7,kWh
+consumo_diario,2026-03-02,410813.1,kWh
+consumo_diario,2026-03-03,411300.0,kWh
+consumo_diario,2026-03-04,413825.8,kWh
+consumo_diario,2026-03-05,410616.3,kWh
+consumo_diario,2026-03-06,413151.3,kWh
+consumo_diario,2026-03-07,410116.2,kWh
+consumo_diario,2026-03-08,411467.1,kWh
+consumo_diario,2026-03-09,412595.9,kWh
+consumo_diario,2026-03-10,412704.9,kWh
+consumo_diario,2026-03-11,411076.6,kWh
+consumo_diario,2026-03-12,409654.1,kWh
+consumo_diario,2026-03-13,408330.6,kWh
+consumo_diario,2026-03-14,410280.1,kWh
+consumo_diario,2026-03-15,409462.0,kWh
+consumo_diario,2026-03-16,409711.2,kWh
+consumo_diario,2026-03-17,411727.9,kWh
+consumo_diario,2026-03-18,412745.7,kWh
+consumo_diario,2026-03-19,411556.0,kWh
+consumo_diario,2026-03-20,412458.2,kWh
+consumo_diario,2026-03-21,412641.1,kWh
+consumo_diario,2026-03-22,409499.8,kWh
+consumo_diario,2026-03-23,411812.6,kWh
+consumo_diario,2026-03-24,411961.9,kWh
+consumo_diario,2026-03-25,410893.7,kWh
+consumo_diario,2026-03-26,412124.4,kWh
+consumo_diario,2026-03-27,410686.2,kWh
+consumo_diario,2026-03-28,409883.6,kWh
+consumo_diario,2026-03-29,413306.5,kWh
+consumo_diario,2026-03-30,410315.0,kWh
+consumo_diario,2026-03-31,409549.8,kWh
+consumo_por_zona_top10,Toluca de Lerdo,12554461.5,kWh
+consumo_por_zona_top10,San Lorenzo Tepaltitlán,2530224.1,kWh
+consumo_por_zona_top10,Sauces,2090873.0,kWh
+consumo_por_zona_top10,Santa María Totoltepec,1548859.4,kWh
+consumo_por_zona_top10,San Pablo Autopan,1525675.6,kWh
+consumo_por_zona_top10,Crespa Floresta,1508550.2,kWh
+consumo_por_zona_top10,San Mateo Oxtotitlán,1463870.7,kWh
+consumo_por_zona_top10,Santiago Tlacotepec,1294911.4,kWh
+consumo_por_zona_top10,Santa Ana Tlapaltitlán,1277971.8,kWh
+consumo_por_zona_top10,Capultitlán,1159022.7,kWh

@@ -244,3 +244,27 @@ política del equipo.
 - Cualquier cambio en las reglas de generación sube la versión semver de Rules.json.
 
 El repositorio vive de la disciplina de sus reglas: si las reglas cambian y no sube la versión, las corridas dejan de ser comparables. Ese es el único punto que no admite relajación.
+
+## Hallazgos de la corrida maestra (Mateo, 23/09/2026)
+
+La primera corrida completa del motor llegó a **10.800.000 lecturas** (5.000 servicios × 90 días, 1 de enero a 31 de marzo de 2026) en **82 segundos**, con validación **PASO** sobre el criterio de volumen (mínimo 10.000.000). El total de registros insertados fue **10.839.782**.
+
+Lo que hizo posible ese número fue reescribir el núcleo de generación de lecturas en numpy vectorizado: en lugar de un bucle por medidor, se trabaja con una matriz por medidor de 90×24 horas y **una sola extracción aleatoria** con semilla derivada (`np.random.default_rng((seed * 2654435761 + id_medidor * 40503) % 2**32)`). Los eventos se aplican con máscaras de índices planos y las filas se construyen planas. El mismo script que antes tardaba varios minutos por lote, ahora completa el escenario completo en menos de minuto y medio. El registro completo del proceso quedó en `resultados_corrida_10M.csv`.
+
+### Resultados consolidados
+
+| Métrica | Valor |
+|---|---|
+| Lecturas generadas | 10.800.000 |
+| Registros totales | 10.839.782 |
+| Consumo real total | 38.593.166 kWh (90 días) |
+| Eventos | 7.296 (7 tipos) |
+| Alertas | 7.136 (339 falsas, prioridad 4) |
+| Medidores | 5.260 (260 retirados/reemplazos) |
+| Periodos de facturación | 15.000 |
+
+Dos hallazgos con valor para la defensa. Primero, la pérdida de comunicación (5.000 eventos, todos por nulificación) pesa sobre todo en vivienda: 13.536 lecturas nulas en VIV_RESID contra 144 en CLINICA. La relación es consistente con el tipo de medidor por categoría. Segundo, el consumo se concentra en tres familias: alumbrado público (9,5 GWh), bombeo (6,1 GWh) y pozos de agua (5,6 GWh) explican más de la mitad del consumo municipal simulado; el pico de demanda global ocurre a las 18:00 h (5,07 kWh promedio contra ~2,8 kWh de media diurna), coherente con el encendido de iluminación pública junto con el pico residencial vespertino.
+
+### BI sobre el datamart
+
+Sobre las 13 tablas se construyó el datamart de 7 vistas (`energia.dm_*`: consumo diario, horario, por tipo, por zona, eventos, alertas y saldo de pérdida de comunicación) y un dashboard en Metabase con 7 preguntas SQL nativas. Todo el montaje es reproducible con `bi/aplicar_datamart.py` y `bi/dashboard_metabase.py` (ver `bi/README_BI.md`). Un tropiezo que vale documentar: desde Metabase v0.47 los endpoints `POST/DELETE /api/dashboard/:id/cards` dejaron de existir; las tarjetas se crean con `PUT /api/dashboard/{id}` usando IDs negativos y claves `snake_case` (`size_x`, `size_y`).

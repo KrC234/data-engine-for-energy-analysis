@@ -1,0 +1,7 @@
+# HyperDataSynthetic - data engine (runtime)
+# Probado con Python 3.13 en Windows (PowerShell 7)
+psycopg[binary]==3.3.6
+PyYAML==6.0.3
+python-dotenv==1.2.2
+numpy==2.4.4
+pandas==3.0.3

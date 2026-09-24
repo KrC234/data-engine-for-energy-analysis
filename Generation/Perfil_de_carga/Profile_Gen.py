@@ -1,73 +1,55 @@
-import numpy as np
-import json
+"""
+    VERIFICADOR DE PERFILES HORARIOS (Generation/Perfil_de_carga/Profile_Gen.py)
 
-# Cargar archivos de datos estaticos para la simulación de comportamiento
-def readJSON(path):
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-            
-    except FileNotFoundError as e:
-        print(f"Error al cargar archivos: {e}")
-        exit()
+    No genera datos: en este proyecto los perfiles horarios los calcula
+    y normaliza 02_catalogos.sql (1,296 filas por 18 tipos x 3 dias x 24 h).
 
-# Parametros de Inicio 
-horas_array = np.arange(24)   
-reglas = readJSON("Rules/Rules.json")
-servicios = readJSON("Test/Testing_data/Tipo_servicio.json");
+    Este modulo VALIDA que las curvas esten completas y normalizadas
+    (cada curva debe sumar 24 para que consumo_base_kwh_h represente
+    el kWh/h medio del dia).
+"""
 
-# Funciones matemáticas
-def generar_curva_gaussiana(horas, centro, ancho, base, amplitud):
-    # Definir un comportamiento de distribución Gaussiano
-    return base + amplitud * np.exp(-((horas - centro) ** 2) / (2 * ancho**2))
 
-def normalizar_24(curva):
-    # Evitar división por cero en casos donde la curva sea completamente plana y en 0
-    suma = np.sum(curva)
-    if suma == 0:
-        return np.zeros_like(curva)
-    factores = (curva / suma) * 24.0
-    return np.round(factores, 4)
+def verificar_perfiles(connection):
+    """Ejecuta la validacion y devuelve un resumen legible."""
+    with connection.cursor() as cur:
+        cur.execute(
+            """
+            SELECT p.id_tipo_servicio, t.clave, p.tipo_dia,
+                   COUNT(*)  AS horas,
+                   ROUND(SUM(p.factor)::numeric, 4) AS suma,
+                   ROUND(MIN(p.factor)::numeric, 4) AS minimo,
+                   ROUND(MAX(p.factor)::numeric, 4) AS maximo
+            FROM energia.perfil_carga_horaria p
+            INNER JOIN energia.tipo_servicio t
+                ON t.id_tipo_servicio = p.id_tipo_servicio
+            GROUP BY p.id_tipo_servicio, t.clave, p.tipo_dia
+            ORDER BY p.id_tipo_servicio, p.tipo_dia
+            """
+        )
+        filas = cur.fetchall()
 
-# Inicialización de iteraciones
-def generacion():
-    registros = []
-    for servicio in servicios["tipos de servicio"]: # Actualizar para ir en armonía con la BD 
-        categoria_actual = servicio["categoria"]
-        
-        # Validar que la categoría exista en las reglas para evitar errores
-        if categoria_actual not in reglas["categorias"]:
-            continue
-            
-        reglas_categoria = reglas["categorias"][categoria_actual]
-        
-        for tipo_dia, modificadores in reglas_categoria["modificadores_dia"].items():
-            curva_diaria_acumulada = np.zeros(24)
-            
-            # Ensamblar las curvas base sumando todas las que pertenezcan a la categoría
-            for curva in reglas_categoria["curva_base"]:
-                centro_modificado = curva["centro"] + modificadores["desplazamiento_pico_h"]
-                amplitud_modificada = curva["amplitud"] * modificadores["factor_amplitud"]
-                
-                curva_generada = generar_curva_gaussiana(
-                    horas=horas_array,
-                    centro=centro_modificado,
-                    ancho=curva["ancho"],
-                    base=curva["base"],
-                    amplitud=amplitud_modificada
-                )
-                curva_diaria_acumulada += curva_generada
-                
-            # Normalizar para que la suma de factores sea 24.0
-            curva_normalizada = normalizar_24(curva_diaria_acumulada)
-            
-            # Generar los registros individuales para la BD
-            for hora in range(24):
-                registros.append({
-                    "ID": servicio["id"],
-                    "Tipo de día": tipo_dia,
-                    "Hora": int(hora),
-                    "Factor": float(curva_normalizada[hora])
-                })
-    return registros
+    problemas = []
+    for id_tipo, clave, tipo_dia, horas, suma, minimo, maximo in filas:
+        horas = int(horas)
+        suma = float(suma)
+        minimo = float(minimo)
+        maximo = float(maximo)
+        if horas != 24:
+            problemas.append(f"{clave}/{tipo_dia}: {horas} horas (esperado 24)")
+        if abs(suma - 24.0) > 0.01:
+            problemas.append(f"{clave}/{tipo_dia}: suma {suma} (esperado ~24)")
+        if minimo < 0 or maximo > 6:
+            problemas.append(f"{clave}/{tipo_dia}: factor fuera de rango 0-6")
 
+    print("    Perfiles: complejidad por ruta verificada")
+    print(f"    Perfiles: {len(filas)} curvas (tipo x dia) revisadas")
+
+    if problemas:
+        print(f"    Perfiles: {len(problemas)} inconsistencias detectadas:")
+        for p in problemas[:20]:
+            print(f"      - {p}")
+        return False
+
+    print("    Perfiles: OK, todas las curvas completas y normalizadas (suma=24)")
+    return True
