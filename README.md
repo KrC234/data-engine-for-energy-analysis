@@ -23,15 +23,7 @@ reproducibles, sin utilizar lecturas eléctricas individuales reales.
   08. Flujo de generación
   09. Generación del consumo
   10. Consumo real y consumo reportado
-  11. Generación por lotes
-  12. Configuración de PostgreSQL
-  13. Preparación del entorno
-  14. Creación inicial de la base
-  15. Comprobación desde Python
-  16. Validación de catálogos
-  17. Estado actual
-  18. Próximo paso
-
+  
 
 ======================================================================
 🎯 01. OBJETIVO
@@ -530,4 +522,3 @@ Cada lectura contiene dos valores:
 El consumo reportado puede ser diferente al consumo real.
 
 
-📈 
