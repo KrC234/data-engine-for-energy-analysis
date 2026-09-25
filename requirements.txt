@@ -1,5 +1,23 @@
-psycopg[binary]
+# HyperDataSynthetic
+# Dependencias externas utilizadas por el proyecto.
+#
+# Instalacion:
+#   python -m pip install -r requirements.txt
+#
+# Python recomendado: 3.11 o superior
+
+# Lectura de config/generation.yaml y config/rules.yaml
+PyYAML==6.0.3
+
+# Calculos vectorizados y generacion de perfiles y lecturas
+numpy==2.5.3
+
+# Controlador PostgreSQL para Psycopg 3
+# El extra [binary] instala las dependencias binarias necesarias.
+psycopg[binary]==3.3.6
+
+# Carga de variables de entorno desde archivos .env
 python-dotenv
-PyYAML
-numpy
+
+# Ejecucion de pruebas automatizadas
 pytest

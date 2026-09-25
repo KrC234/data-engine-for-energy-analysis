@@ -22,12 +22,12 @@
 
 services:
 
-  # Los servicios se distribuyen entre las zonas según
-  # el número de viviendas habitadas de energia.zona.
+  # Los servicios se distribuyen entre las zonas segun
+  # el numero de viviendas habitadas de energia.zona.
   use_housing_weights: true
 
 
-  # Distribución del padrón por categoría.
+  # Distribucion del padron por categoria.
   # La suma debe ser exactamente 1.0.
   category_distribution:
 
@@ -39,7 +39,7 @@ services:
     MOVILIDAD: 0.037
 
 
-  # Probabilidad de generación solar por categoría.
+  # Probabilidad de generacion solar por categoria.
   solar_probability:
 
     RESIDENCIAL: 0.08
@@ -50,14 +50,14 @@ services:
     MOVILIDAD: 0.00
 
 
-  # Ocupación sintética de los servicios residenciales.
+  # Ocupacion sintetica de los servicios residenciales.
   residential_occupancy:
 
     min: 1
     max: 7
 
 
-  # Carga contratada según categoría, expresada en kW.
+  # Carga contratada segun categoria, expresada en kW.
   contracted_load_kw:
 
     RESIDENCIAL:
@@ -89,16 +89,16 @@ services:
   # UBICACION GEOGRAFICA
   # ==========================================================
   #
-  # Estas coordenadas delimitan el escenario sintético.
+  # Estas coordenadas delimitan el escenario sintetico.
   #
   # Los valores generados se almacenan en:
   #
   #   energia.servicio.latitud
   #   energia.servicio.longitud
   #
-  # La base ya acepta latitudes entre -90 y 90 y longitudes
+  # La base acepta latitudes entre -90 y 90 y longitudes
   # entre -180 y 180, por lo que estas reglas no requieren
-  # ninguna modificación en PostgreSQL.
+  # ninguna modificacion en PostgreSQL.
 
   geographic_location:
 
@@ -112,14 +112,14 @@ services:
       min: -99.780000
       max: -99.550000
 
-    # Número de decimales que tendrá cada coordenada.
+    # Numero de decimales que tendra cada coordenada.
     decimal_places: 6
 
     # Evita que todos los servicios de una zona reciban
     # exactamente la misma coordenada.
     random_dispersion: true
 
-    # Distancia máxima aproximada de dispersión respecto
+    # Distancia maxima aproximada de dispersion respecto
     # al punto central asignado a una zona.
     max_dispersion_km: 2.5
 
@@ -128,13 +128,13 @@ services:
   # ALTITUD
   # ==========================================================
   #
-  # La altitud se genera únicamente como variable auxiliar.
+  # La altitud se genera unicamente como variable auxiliar.
   #
   # NO se inserta en energia.servicio porque la tabla actual
   # no contiene una columna llamada altitud.
   #
   # Por ahora se utiliza exclusivamente para ajustar
-  # ligeramente la temperatura sintética.
+  # ligeramente la temperatura sintetica.
 
   altitude:
 
@@ -164,16 +164,32 @@ services:
 
 meters:
 
-  # Distribución de marcas sintéticas.
-  # La suma debe ser exactamente 1.0.
+  # Distribucion de marcas sinteticas utilizada por
+  # Generation/Dispositivos_Gen.py.
+  #
+  # Cada valor representa la probabilidad aproximada de que
+  # un medidor reciba esa marca.
+  #
+  # La suma de todos los pesos debe ser exactamente 1.0.
+  #
+  # Con la semilla configurada en generation.yaml, la seleccion
+  # de marcas es reproducible entre ejecuciones equivalentes.
   brands:
 
+    # Aproximadamente 35 % de los medidores.
     MEDISUR: 0.35
+
+    # Aproximadamente 35 % de los medidores.
     KRONOS: 0.35
+
+    # Aproximadamente 30 % de los medidores.
     NOVAMET: 0.30
 
 
-  # Calidad de comunicación del medidor.
+  # Calidad de comunicacion del medidor.
+  #
+  # Estas reglas quedan disponibles para una version futura
+  # de Dispositivos_Gen.py que inserte calidad_enlace.
   link_quality:
 
     min: 75
@@ -181,16 +197,32 @@ meters:
 
 
   # Permite reducir ligeramente la calidad de enlace
-  # en zonas clasificadas como periféricas.
+  # en zonas clasificadas como perifericas.
+  #
+  # Actualmente solo tendra efecto si Dispositivos_Gen.py
+  # consulta y utiliza expresamente esta regla.
   adjust_link_quality_by_zone: true
 
 
-  # Distribución de multiplicadores.
+  # Distribucion de multiplicadores.
+  #
+  # La suma debe ser exactamente 1.0.
+  #
+  # Actualmente solo tendra efecto si energia.medidor contiene
+  # la columna multiplicador y Dispositivos_Gen.py implementa
+  # su generacion e insercion.
   multipliers:
 
+    # Medidor directo, aproximadamente 94 %.
     1: 0.94
+
+    # Aproximadamente 3 %.
     20: 0.03
+
+    # Aproximadamente 2 %.
     40: 0.02
+
+    # Aproximadamente 1 %.
     80: 0.01
 
 
@@ -222,8 +254,8 @@ calendar:
       max_c: [23.0, 30.0]
 
 
-  # Si está habilitado, Calendario_Gen.py podrá modificar
-  # la temperatura de acuerdo con la altitud sintética.
+  # Si esta habilitado, Calendario_Gen.py podra modificar
+  # la temperatura de acuerdo con la altitud sintetica.
   adjust_temperature_by_altitude: true
 
 
@@ -242,12 +274,12 @@ calendar:
   # TIPOS DE DIA
   # ==========================================================
   #
-  # Estos códigos coinciden exactamente con las restricciones
+  # Estos codigos coinciden exactamente con las restricciones
   # existentes en energia.calendario y en
   # energia.perfil_carga_horaria.
   #
-  # H = día hábil
-  # S = sábado
+  # H = dia habil
+  # S = sabado
   # D = domingo o festivo
   #
   # Los festivos utilizan D aunque ocurran entre semana.
@@ -264,10 +296,10 @@ calendar:
   # ==========================================================
   #
   # Estas fechas se definen manualmente como parte del
-  # escenario sintético.
+  # escenario sintetico.
   #
-  # No se consulta ningún calendario externo durante
-  # la ejecución.
+  # No se consulta ningun calendario externo durante
+  # la ejecucion.
 
   holidays:
 
@@ -284,7 +316,7 @@ calendar:
       - date: "2026-03-16"
         name: "Festivo de marzo"
 
-    # Todo festivo se clasifica como tipo de día D.
+    # Todo festivo se clasifica como tipo de dia D.
     day_type: "D"
 
 
@@ -294,7 +326,7 @@ calendar:
   #
   # Una fecha puede ser festiva y vacacional al mismo tiempo.
   #
-  # Esta regla se utilizará para llenar la columna:
+  # Esta regla se utilizara para llenar la columna:
   #
   #   energia.calendario.es_vacacional
 
@@ -330,7 +362,7 @@ consumption:
     max: 1.10
 
 
-  # Determina si el factor socioeconómico de energia.zona
+  # Determina si el factor socioeconomico de energia.zona
   # modifica el consumo.
   use_socioeconomic_factor: true
 
@@ -344,13 +376,13 @@ consumption:
   use_hourly_profile: true
 
 
-  # Permite que la temperatura afecte el consumo según
+  # Permite que la temperatura afecte el consumo segun
   # sensibilidad_temp de energia.tipo_servicio.
   use_temperature_factor: true
 
 
   # La altitud no multiplica directamente el consumo.
-  # Solo modifica la temperatura sintética.
+  # Solo modifica la temperatura sintetica.
   use_altitude_directly: false
 
 
@@ -360,13 +392,13 @@ consumption:
 
 solar:
 
-  # Horas durante las que puede aplicarse reducción
+  # Horas durante las que puede aplicarse reduccion
   # del consumo neto.
   start_hour: 9
   end_hour: 17
 
 
-  # Reducción del consumo durante las horas solares.
+  # Reduccion del consumo durante las horas solares.
   reduction:
 
     min: 0.15

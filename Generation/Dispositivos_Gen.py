@@ -1,85 +1,124 @@
-import random
-from datetime import timedelta
+"""
+GENERADOR DE DISPOSITIVOS / MEDIDORES
+Generation/Dispositivos_Gen.py
 
+Genera un medidor inicial por cada servicio existente en PostgreSQL y,
+opcionalmente, medidores de reemplazo.
+
+Mejoras incorporadas:
+- Usa rules.yaml -> meters -> brands para asignar marcas con pesos.
+- Conserva un generador aleatorio local y reproducible.
+- Genera numeros de serie con prefijo de marca, anio y secuencial.
+- Mantiene compatibilidad con variantes comunes del esquema SQL.
+- Retira el medidor anterior cuando se genera un reemplazo.
+- Respeta el rango completo de fechas configurado.
+- No ejecuta commit internamente; main.py controla la transaccion.
+"""
+
+import random
+from datetime import date, datetime, timedelta
+
+from psycopg import sql
 from psycopg.rows import dict_row
 
 
+# ======================================================================
+# CONFIGURACION
+# ======================================================================
+
+
 def obtener_seccion(config, nombre):
-    """
-    Obtiene una seccion del archivo de configuracion.
-    """
-
+    """Obtiene una seccion del archivo de configuracion."""
     seccion = config.get(nombre, {})
-
-    if isinstance(seccion, dict):
-        return seccion
-
-    return {}
+    return seccion if isinstance(seccion, dict) else {}
 
 
-def obtener_parametro(
-    config,
-    nombres,
-    valor_default=None,
-    obligatorio=False,
-):
-    """
-    Busca un parametro usando diferentes nombres posibles.
-    """
-
+def obtener_parametro(config, nombres, valor_default=None, obligatorio=False):
+    """Busca un parametro en generation y en la raiz de config."""
     generation = obtener_seccion(config, "generation")
 
     for nombre in nombres:
-        if nombre in generation:
+        if nombre in generation and generation[nombre] is not None:
             return generation[nombre]
-
-        if nombre in config:
+        if nombre in config and config[nombre] is not None:
             return config[nombre]
 
     if obligatorio:
-        raise KeyError(
-            "Falta uno de estos parametros: "
-            + ", ".join(nombres)
-        )
+        raise KeyError("Falta uno de estos parametros: " + ", ".join(nombres))
 
     return valor_default
 
 
-def tabla_tiene_columna(connection, esquema, tabla, columna):
-    """
-    Comprueba si una tabla contiene una columna.
-    """
+def convertir_fecha(valor, nombre_parametro):
+    """Convierte date, datetime o texto ISO a date."""
+    if isinstance(valor, datetime):
+        return valor.date()
+    if isinstance(valor, date):
+        return valor
 
-    consulta = """
-        SELECT EXISTS (
-            SELECT 1
-            FROM information_schema.columns
-            WHERE table_schema = %s
-              AND table_name = %s
-              AND column_name = %s
-        );
-    """
+    try:
+        return date.fromisoformat(str(valor))
+    except (TypeError, ValueError) as error:
+        raise ValueError(
+            f"El parametro {nombre_parametro} debe tener formato YYYY-MM-DD: {valor!r}"
+        ) from error
 
-    with connection.cursor() as cursor:
-        cursor.execute(
-            consulta,
-            (
-                esquema,
-                tabla,
-                columna,
-            ),
+
+def obtener_reglas_medidores(rules):
+    """Obtiene y valida rules.yaml -> meters."""
+    reglas = obtener_seccion(rules, "meters")
+    if not reglas:
+        raise KeyError("Falta la seccion 'meters' en rules.yaml.")
+    return reglas
+
+
+def obtener_marcas(reglas_meters):
+    """Valida la distribucion de marcas y devuelve nombres y pesos."""
+    marcas = reglas_meters.get("brands")
+
+    if not isinstance(marcas, dict) or not marcas:
+        raise ValueError(
+            "rules.yaml debe contener meters.brands con al menos una marca."
         )
 
-        resultado = cursor.fetchone()
+    nombres = []
+    pesos = []
 
-    return bool(resultado[0])
+    for marca, peso in marcas.items():
+        nombre = str(marca).strip().upper()
+        try:
+            peso_numerico = float(peso)
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                f"El peso de la marca {marca!r} no es numerico: {peso!r}"
+            ) from error
+
+        if not nombre:
+            raise ValueError("No se permiten nombres de marca vacios.")
+        if peso_numerico < 0:
+            raise ValueError(f"El peso de {nombre} no puede ser negativo.")
+
+        nombres.append(nombre)
+        pesos.append(peso_numerico)
+
+    if sum(pesos) <= 0:
+        raise ValueError("La suma de los pesos de meters.brands debe ser mayor que cero.")
+
+    return nombres, pesos
+
+
+def elegir_marca(generador_aleatorio, nombres, pesos):
+    """Elige una marca respetando los pesos configurados."""
+    return generador_aleatorio.choices(nombres, weights=pesos, k=1)[0]
+
+
+# ======================================================================
+# METADATOS DE POSTGRESQL
+# ======================================================================
 
 
 def obtener_columnas_tabla(connection, esquema, tabla):
-    """
-    Devuelve las columnas disponibles en una tabla.
-    """
-
+    """Devuelve las columnas disponibles en una tabla."""
     consulta = """
         SELECT column_name
         FROM information_schema.columns
@@ -89,42 +128,23 @@ def obtener_columnas_tabla(connection, esquema, tabla):
     """
 
     with connection.cursor() as cursor:
-        cursor.execute(
-            consulta,
-            (
-                esquema,
-                tabla,
-            ),
-        )
-
+        cursor.execute(consulta, (esquema, tabla))
         filas = cursor.fetchall()
 
     return [fila[0] for fila in filas]
 
 
 def cargar_servicios(connection):
-    """
-    Obtiene los servicios directamente desde PostgreSQL.
-
-    Ya no utiliza Servicios_generados.csv.
-    """
-
-    columnas = obtener_columnas_tabla(
-        connection,
-        "energia",
-        "servicio",
-    )
+    """Carga los servicios desde energia.servicio."""
+    columnas = obtener_columnas_tabla(connection, "energia", "servicio")
 
     if not columnas:
         raise RuntimeError(
-            "No se encontro la tabla energia.servicio "
-            "o no contiene columnas."
+            "No se encontro la tabla energia.servicio o no contiene columnas."
         )
-
     if "id_servicio" not in columnas:
         raise RuntimeError(
-            "La tabla energia.servicio no contiene "
-            "la columna id_servicio."
+            "La tabla energia.servicio no contiene la columna id_servicio."
         )
 
     consulta = """
@@ -139,135 +159,144 @@ def cargar_servicios(connection):
 
     if not servicios:
         raise RuntimeError(
-            "La tabla energia.servicio no contiene registros. "
-            "Ejecuta primero el generador de servicios."
+            "energia.servicio no contiene registros. Ejecuta primero Servicios_Gen.py."
         )
 
-    print(
-        f"[OK] Servicios obtenidos desde PostgreSQL: "
-        f"{len(servicios):,}"
-    )
-
+    print(f"[OK] Servicios obtenidos desde PostgreSQL: {len(servicios):,}")
     return servicios
 
 
-def obtener_fecha_instalacion(servicio, fecha_inicial):
-    """
-    Obtiene la fecha de instalacion disponible en el servicio.
-    """
+# ======================================================================
+# CONSTRUCCION DE MEDIDORES
+# ======================================================================
 
-    nombres_posibles = (
+
+def obtener_fecha_instalacion(servicio, fecha_inicial):
+    """Usa la fecha disponible del servicio o la fecha inicial de la corrida."""
+    for nombre in (
         "fecha_alta",
         "fecha_inicio",
         "fecha_instalacion",
         "fecha_contratacion",
-    )
-
-    for nombre in nombres_posibles:
+    ):
         valor = servicio.get(nombre)
-
         if valor is not None:
-            return valor
+            return convertir_fecha(valor, nombre)
 
     return fecha_inicial
 
 
-def generar_numero_medidor(indice):
+def generar_numero_medidor(marca, indice, fecha_referencia):
     """
-    Genera un numero de medidor reproducible.
-    """
+    Genera una serie unica y reproducible de hasta 24 caracteres.
 
-    return f"HSD-TOL-{indice:08d}"
+    Ejemplo: MEDI-2600000001-8
+    """
+    prefijo = "".join(c for c in marca.upper() if c.isalnum())[:4]
+    prefijo = (prefijo or "HSD").ljust(4, "X")
+    anio = str(fecha_referencia.year)[-2:]
+    base = f"{prefijo}-{anio}{indice:08d}"
+    digito = sum(ord(caracter) for caracter in base) % 10
+    return f"{base}-{digito}"
 
 
 def construir_medidor(
     servicio,
     indice,
     fecha_inicial,
+    generador_aleatorio,
+    nombres_marcas,
+    pesos_marcas,
+    modelo="HSD-SMART-01",
 ):
-    """
-    Construye la informacion basica de un medidor.
-    """
-
-    id_servicio = servicio["id_servicio"]
-
-    fecha_instalacion = obtener_fecha_instalacion(
-        servicio,
-        fecha_inicial,
-    )
+    """Construye un medidor inicial."""
+    fecha_instalacion = obtener_fecha_instalacion(servicio, fecha_inicial)
+    marca = elegir_marca(generador_aleatorio, nombres_marcas, pesos_marcas)
 
     return {
-        "id_servicio": id_servicio,
-        "numero_serie": generar_numero_medidor(indice),
-        "modelo": "HSD-SMART-01",
-        "fabricante": "HyperDataSynthetic",
+        "id_servicio": servicio["id_servicio"],
+        "numero_serie": generar_numero_medidor(marca, indice, fecha_instalacion),
+        "modelo": modelo,
+        "fabricante": marca,
         "fecha_instalacion": fecha_instalacion,
         "fecha_retiro": None,
         "estado": "ACTIVO",
     }
 
 
+def generar_reemplazos(
+    servicios,
+    cantidad_reemplazos,
+    fecha_inicial,
+    fecha_final,
+    indice_inicial,
+    generador_aleatorio,
+    nombres_marcas,
+    pesos_marcas,
+):
+    """
+    Genera medidores de reemplazo y devuelve parejas:
+    (medidor_nuevo, fecha_reemplazo).
+    """
+    if cantidad_reemplazos <= 0 or not servicios:
+        return []
+
+    cantidad = min(cantidad_reemplazos, len(servicios))
+    servicios_seleccionados = generador_aleatorio.sample(servicios, cantidad)
+    dias_periodo = (fecha_final - fecha_inicial).days
+    reemplazos = []
+
+    for desplazamiento, servicio in enumerate(servicios_seleccionados, start=1):
+        # Si existe al menos un dia de rango, nunca reemplaza antes del inicio.
+        dia_reemplazo = generador_aleatorio.randint(1, dias_periodo) if dias_periodo else 0
+        fecha_reemplazo = fecha_inicial + timedelta(days=dia_reemplazo)
+        indice = indice_inicial + desplazamiento
+        marca = elegir_marca(generador_aleatorio, nombres_marcas, pesos_marcas)
+
+        nuevo = {
+            "id_servicio": servicio["id_servicio"],
+            "numero_serie": generar_numero_medidor(marca, indice, fecha_reemplazo),
+            "modelo": "HSD-SMART-02",
+            "fabricante": marca,
+            "fecha_instalacion": fecha_reemplazo,
+            "fecha_retiro": None,
+            "estado": "ACTIVO",
+        }
+        reemplazos.append((nuevo, fecha_reemplazo))
+
+    return reemplazos
+
+
+# ======================================================================
+# MAPEO E INSERCION
+# ======================================================================
+
+
 def obtener_mapeo_columnas(columnas):
-    """
-    Determina los nombres reales de las columnas de energia.medidor.
-
-    Permite algunas variantes comunes del esquema.
-    """
-
+    """Relaciona campos logicos con las columnas reales de energia.medidor."""
     opciones = {
-        "id_servicio": (
-            "id_servicio",
-        ),
-        "numero_serie": (
-            "numero_serie",
-            "serie",
-            "codigo_medidor",
-            "numero_medidor",
-        ),
-        "modelo": (
-            "modelo",
-        ),
-        "fabricante": (
-            "fabricante",
-            "marca",
-        ),
-        "fecha_instalacion": (
-            "fecha_instalacion",
-            "fecha_alta",
-        ),
-        "fecha_retiro": (
-            "fecha_retiro",
-            "fecha_baja",
-        ),
-        "estado": (
-            "estado",
-            "estatus",
-        ),
+        "id_servicio": ("id_servicio",),
+        "numero_serie": ("numero_serie", "serie", "codigo_medidor", "numero_medidor"),
+        "modelo": ("modelo",),
+        "fabricante": ("fabricante", "marca"),
+        "fecha_instalacion": ("fecha_instalacion", "fecha_alta"),
+        "fecha_retiro": ("fecha_retiro", "fecha_baja"),
+        "estado": ("estado", "estatus"),
     }
 
     mapeo = {}
-
     for campo_logico, candidatos in opciones.items():
         for candidato in candidatos:
             if candidato in columnas:
                 mapeo[campo_logico] = candidato
                 break
 
-    columnas_obligatorias = (
-        "id_servicio",
-        "numero_serie",
-    )
-
     faltantes = [
-        nombre
-        for nombre in columnas_obligatorias
-        if nombre not in mapeo
+        campo for campo in ("id_servicio", "numero_serie") if campo not in mapeo
     ]
-
     if faltantes:
         raise RuntimeError(
-            "No fue posible identificar estas columnas "
-            "obligatorias de energia.medidor: "
+            "No fue posible identificar columnas obligatorias de energia.medidor: "
             + ", ".join(faltantes)
             + ". Columnas disponibles: "
             + ", ".join(columnas)
@@ -277,10 +306,7 @@ def obtener_mapeo_columnas(columnas):
 
 
 def preparar_filas_medidores(medidores, mapeo):
-    """
-    Convierte los medidores a las columnas reales de la tabla.
-    """
-
+    """Convierte los diccionarios a las columnas reales de la tabla."""
     campos_logicos = [
         campo
         for campo in (
@@ -294,275 +320,177 @@ def preparar_filas_medidores(medidores, mapeo):
         )
         if campo in mapeo
     ]
-
-    columnas_sql = [
-        mapeo[campo]
-        for campo in campos_logicos
-    ]
-
-    filas = [
-        tuple(
-            medidor[campo]
-            for campo in campos_logicos
-        )
-        for medidor in medidores
-    ]
-
+    columnas_sql = [mapeo[campo] for campo in campos_logicos]
+    filas = [tuple(medidor[campo] for campo in campos_logicos) for medidor in medidores]
     return columnas_sql, filas
 
 
-def insertar_medidores(
-    connection,
-    medidores,
-    batch_size,
-):
-    """
-    Inserta medidores en PostgreSQL por lotes.
-    """
+def insertar_medidores(connection, medidores, batch_size, mapeo=None):
+    """Inserta medidores por lotes y devuelve la cantidad insertada."""
+    if not medidores:
+        return 0
+    if batch_size <= 0:
+        raise ValueError("batch_size debe ser mayor que cero.")
 
-    columnas_tabla = obtener_columnas_tabla(
-        connection,
-        "energia",
-        "medidor",
+    if mapeo is None:
+        columnas = obtener_columnas_tabla(connection, "energia", "medidor")
+        if not columnas:
+            raise RuntimeError("No se encontro la tabla energia.medidor.")
+        mapeo = obtener_mapeo_columnas(columnas)
+
+    columnas_sql, filas = preparar_filas_medidores(medidores, mapeo)
+    consulta = sql.SQL("INSERT INTO {}.{} ({}) VALUES ({})").format(
+        sql.Identifier("energia"),
+        sql.Identifier("medidor"),
+        sql.SQL(", ").join(map(sql.Identifier, columnas_sql)),
+        sql.SQL(", ").join(sql.Placeholder() for _ in columnas_sql),
     )
-
-    if not columnas_tabla:
-        raise RuntimeError(
-            "No se encontro la tabla energia.medidor."
-        )
-
-    mapeo = obtener_mapeo_columnas(columnas_tabla)
-
-    columnas_sql, filas = preparar_filas_medidores(
-        medidores,
-        mapeo,
-    )
-
-    marcadores = ", ".join(
-        ["%s"] * len(columnas_sql)
-    )
-
-    nombres_columnas = ", ".join(columnas_sql)
-
-    consulta = f"""
-        INSERT INTO energia.medidor (
-            {nombres_columnas}
-        )
-        VALUES ({marcadores});
-    """
 
     total_insertado = 0
-
     with connection.cursor() as cursor:
         for inicio in range(0, len(filas), batch_size):
-            lote = filas[inicio:inicio + batch_size]
-
-            cursor.executemany(
-                consulta,
-                lote,
-            )
-
+            lote = filas[inicio : inicio + batch_size]
+            cursor.executemany(consulta, lote)
             total_insertado += len(lote)
-
-            print(
-                "[OK] Medidores insertados: "
-                f"{total_insertado:,}/{len(filas):,}"
-            )
+            print(f"[OK] Medidores insertados: {total_insertado:,}/{len(filas):,}")
 
     return total_insertado
 
 
-def generar_reemplazos(
-    servicios,
-    cantidad_reemplazos,
-    fecha_inicial,
-    fecha_final,
-    indice_inicial,
-    generador_aleatorio,
-):
-    """
-    Genera medidores adicionales para representar reemplazos.
-
-    Esta funcion solamente crea los nuevos dispositivos.
-    La fecha exacta se distribuye dentro del periodo.
-    """
-
-    if cantidad_reemplazos <= 0:
-        return []
-
-    if not servicios:
-        return []
-
-    cantidad_reemplazos = min(
-        cantidad_reemplazos,
-        len(servicios),
-    )
-
-    servicios_seleccionados = generador_aleatorio.sample(
-        servicios,
-        cantidad_reemplazos,
-    )
-
-    dias_periodo = max(
-        (fecha_final - fecha_inicial).days,
-        1,
-    )
-
-    reemplazos = []
-
-    for desplazamiento, servicio in enumerate(
-        servicios_seleccionados,
-        start=1,
-    ):
-        dia_reemplazo = generador_aleatorio.randint(
-            1,
-            dias_periodo,
+def retirar_medidores_reemplazados(connection, reemplazos, mapeo):
+    """Marca como retirado el medidor activo anterior de cada servicio."""
+    if not reemplazos:
+        return 0
+    if "fecha_retiro" not in mapeo and "estado" not in mapeo:
+        raise RuntimeError(
+            "No se pueden aplicar reemplazos: energia.medidor no tiene "
+            "fecha_retiro/fecha_baja ni estado/estatus."
         )
 
-        fecha_reemplazo = (
-            fecha_inicial
-            + timedelta(days=dia_reemplazo)
+    asignaciones = []
+    if "fecha_retiro" in mapeo:
+        asignaciones.append(
+            sql.SQL("{} = %s").format(sql.Identifier(mapeo["fecha_retiro"]))
+        )
+    if "estado" in mapeo:
+        asignaciones.append(
+            sql.SQL("{} = %s").format(sql.Identifier(mapeo["estado"]))
         )
 
-        indice = indice_inicial + desplazamiento
-
-        reemplazos.append(
-            {
-                "id_servicio": servicio["id_servicio"],
-                "numero_serie": generar_numero_medidor(indice),
-                "modelo": "HSD-SMART-02",
-                "fabricante": "HyperDataSynthetic",
-                "fecha_instalacion": fecha_reemplazo,
-                "fecha_retiro": None,
-                "estado": "ACTIVO",
-            }
+    filtros_activo = []
+    if "fecha_retiro" in mapeo:
+        filtros_activo.append(
+            sql.SQL("{} IS NULL").format(sql.Identifier(mapeo["fecha_retiro"]))
+        )
+    if "estado" in mapeo:
+        filtros_activo.append(
+            sql.SQL("{} = %s").format(sql.Identifier(mapeo["estado"]))
         )
 
-    return reemplazos
+    consulta = sql.SQL("UPDATE {}.{} SET {} WHERE {} = %s").format(
+        sql.Identifier("energia"),
+        sql.Identifier("medidor"),
+        sql.SQL(", ").join(asignaciones),
+        sql.Identifier(mapeo["id_servicio"]),
+    )
+    if filtros_activo:
+        consulta += sql.SQL(" AND ") + sql.SQL(" AND ").join(filtros_activo)
+
+    total_actualizado = 0
+    with connection.cursor() as cursor:
+        for medidor_nuevo, fecha_reemplazo in reemplazos:
+            parametros = []
+            if "fecha_retiro" in mapeo:
+                parametros.append(fecha_reemplazo)
+            if "estado" in mapeo:
+                parametros.append("RETIRADO")
+            parametros.append(medidor_nuevo["id_servicio"])
+            if "estado" in mapeo:
+                parametros.append("ACTIVO")
+
+            cursor.execute(consulta, tuple(parametros))
+            total_actualizado += cursor.rowcount
+
+    return total_actualizado
+
+
+# ======================================================================
+# GENERADOR PRINCIPAL
+# ======================================================================
 
 
 def generar_dispositivos(connection, config, rules):
-    """
-    Genera los medidores a partir de energia.servicio.
-
-    Parameters
-    ----------
-    connection
-        Conexion activa de psycopg.
-
-    config
-        Configuracion cargada desde generation.yaml.
-
-    rules
-        Reglas cargadas desde rules.yaml.
-
-    Returns
-    -------
-    int
-        Cantidad total de medidores insertados.
-    """
-
-    del rules
-
+    """Genera e inserta medidores iniciales y reemplazos."""
     print()
     print("=" * 60)
     print("GENERACION DE DISPOSITIVOS")
     print("=" * 60)
 
-    semilla = int(
+    semilla = int(obtener_parametro(config, ["seed", "semilla"], 20260101))
+    fecha_inicial = convertir_fecha(
         obtener_parametro(
             config,
-            ["seed", "semilla"],
-            20260101,
-        )
+            ["start_date", "date_start", "fecha_inicial", "fecha_inicio", "fecha_desde"],
+            obligatorio=True,
+        ),
+        "start_date/date_start",
     )
-
-    fecha_inicial_texto = obtener_parametro(
-        config,
-        [
-            "start_date",
-            "fecha_inicial",
-            "fecha_desde",
-        ],
-        obligatorio=True,
-    )
-
-    fecha_final_texto = obtener_parametro(
-        config,
-        [
-            "end_date",
-            "fecha_final",
-            "fecha_hasta",
-        ],
-        obligatorio=True,
-    )
-
-    reemplazos_habilitados = (
-        obtener_seccion(config, "features")
-        .get("meter_replacements", True)
-    )
-
-    cantidad_reemplazos = int(
+    fecha_final = convertir_fecha(
         obtener_parametro(
             config,
-            ["replacement_meters"],
-            0,
-        )
-    )
-
-    performance = obtener_seccion(
-        config,
-        "performance",
-    )
-
-    batch_size = int(
-        performance.get(
-            "batch_size",
-            obtener_parametro(
-                config,
-                ["batch_size"],
-                100000,
-            ),
-        )
-    )
-
-    from datetime import date
-
-    fecha_inicial = date.fromisoformat(
-        str(fecha_inicial_texto)
-    )
-
-    fecha_final = date.fromisoformat(
-        str(fecha_final_texto)
+            ["end_date", "date_end", "fecha_final", "fecha_fin", "fecha_hasta"],
+            obligatorio=True,
+        ),
+        "end_date/date_end",
     )
 
     if fecha_final < fecha_inicial:
-        raise ValueError(
-            "end_date no puede ser anterior a start_date."
-        )
+        raise ValueError("La fecha final no puede ser anterior a la fecha inicial.")
 
+    features = obtener_seccion(config, "features")
+    reemplazos_habilitados = features.get("meter_replacements", True)
+    cantidad_reemplazos = int(
+        obtener_parametro(config, ["replacement_meters", "medidores_reemplazo"], 0)
+    )
+    if cantidad_reemplazos < 0:
+        raise ValueError("replacement_meters no puede ser negativo.")
+
+    performance = obtener_seccion(config, "performance")
+    batch_size = int(
+        performance.get(
+            "batch_size",
+            obtener_parametro(config, ["batch_size", "tamano_lote"], 100000),
+        )
+    )
+
+    reglas_meters = obtener_reglas_medidores(rules)
+    nombres_marcas, pesos_marcas = obtener_marcas(reglas_meters)
     generador_aleatorio = random.Random(semilla + 1000)
 
-    servicios = cargar_servicios(connection)
+    print("[OK] Marcas configuradas: " + ", ".join(nombres_marcas))
 
+    columnas_medidor = obtener_columnas_tabla(connection, "energia", "medidor")
+    if not columnas_medidor:
+        raise RuntimeError("No se encontro la tabla energia.medidor.")
+    mapeo = obtener_mapeo_columnas(columnas_medidor)
+
+    servicios = cargar_servicios(connection)
     medidores_iniciales = [
         construir_medidor(
             servicio=servicio,
             indice=indice,
             fecha_inicial=fecha_inicial,
+            generador_aleatorio=generador_aleatorio,
+            nombres_marcas=nombres_marcas,
+            pesos_marcas=pesos_marcas,
         )
-        for indice, servicio in enumerate(
-            servicios,
-            start=1,
-        )
+        for indice, servicio in enumerate(servicios, start=1)
     ]
 
-    print(
-        f"[OK] Medidores iniciales preparados: "
-        f"{len(medidores_iniciales):,}"
+    print(f"[OK] Medidores iniciales preparados: {len(medidores_iniciales):,}")
+    total_insertado = insertar_medidores(
+        connection, medidores_iniciales, batch_size, mapeo
     )
-
-    reemplazos = []
 
     if reemplazos_habilitados and cantidad_reemplazos > 0:
         reemplazos = generar_reemplazos(
@@ -572,34 +500,24 @@ def generar_dispositivos(connection, config, rules):
             fecha_final=fecha_final,
             indice_inicial=len(medidores_iniciales),
             generador_aleatorio=generador_aleatorio,
+            nombres_marcas=nombres_marcas,
+            pesos_marcas=pesos_marcas,
         )
 
-        print(
-            f"[OK] Medidores de reemplazo preparados: "
-            f"{len(reemplazos):,}"
-        )
+        actualizados = retirar_medidores_reemplazados(connection, reemplazos, mapeo)
+        nuevos = [medidor for medidor, _ in reemplazos]
+        total_insertado += insertar_medidores(connection, nuevos, batch_size, mapeo)
 
-    todos_los_medidores = (
-        medidores_iniciales
-        + reemplazos
-    )
+        print(f"[OK] Medidores anteriores retirados: {actualizados:,}")
+        print(f"[OK] Medidores de reemplazo insertados: {len(nuevos):,}")
+    else:
+        print("[OK] No se solicitaron reemplazos de medidor")
 
-    total_insertado = insertar_medidores(
-        connection=connection,
-        medidores=todos_los_medidores,
-        batch_size=batch_size,
-    )
-
-    print(
-        f"[OK] Total de medidores generados: "
-        f"{total_insertado:,}"
-    )
-
+    print(f"[OK] Total de medidores insertados: {total_insertado:,}")
     return total_insertado
 
 
 if __name__ == "__main__":
     raise RuntimeError(
-        "Dispositivos_Gen.py no debe ejecutarse directamente. "
-        "Ejecuta python main.py."
+        "Dispositivos_Gen.py no debe ejecutarse directamente. Ejecuta python main.py."
     )
