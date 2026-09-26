@@ -5,8 +5,14 @@ Responsabilidad:
 - Usa prob_deteccion de energia.tipo_evento para decidir si cada evento
   produce una alerta.
 - Permite clasificaciones incorrectas y falsas alarmas controladas.
-- Genera prioridad, momento de detección, cierre y resultado.
+- Genera prioridad, momento de deteccion, cierre y resultado.
+- Respeta la vigencia individual de cada medidor.
 - Inserta las filas en energia.alerta sin modificar la estructura de la base.
+
+Convencion temporal:
+- fecha_instalacion es inclusiva.
+- fecha_retiro es exclusiva.
+- Una alerta cumple: instalacion <= ts_generacion < retiro.
 
 Orden recomendado:
     Eventos_Gen.py -> Lecturas_Gen.py -> Alertas_Gen.py
@@ -95,6 +101,18 @@ def _elegir_distinto(
     return rng.choice(alternativas) if alternativas else actual
 
 
+def _instante_aleatorio(
+    inicio: datetime,
+    fin_exclusivo: datetime,
+    rng: random.Random,
+) -> datetime | None:
+    """Elige una hora alineada dentro de [inicio, fin_exclusivo)."""
+    horas = int((fin_exclusivo - inicio).total_seconds() // 3600)
+    if horas <= 0:
+        return None
+    return inicio + timedelta(hours=rng.randrange(horas))
+
+
 # ======================================================================
 # CONSULTAS
 # ======================================================================
@@ -172,10 +190,43 @@ def _cargar_eventos(connection: Any) -> list[dict[str, Any]]:
     ]
 
 
-def _cargar_medidores(connection: Any) -> list[int]:
+def _cargar_medidores(connection: Any) -> list[dict[str, Any]]:
+    """Carga medidores con su vigencia para generar falsos positivos validos."""
+    sql = """
+        SELECT
+            id_medidor,
+            fecha_instalacion,
+            fecha_retiro
+        FROM energia.medidor
+        ORDER BY id_medidor
+    """
+
     with connection.cursor() as cursor:
-        cursor.execute("SELECT id_medidor FROM energia.medidor ORDER BY id_medidor")
-        return [int(fila[0]) for fila in cursor.fetchall()]
+        cursor.execute(sql)
+        filas = cursor.fetchall()
+
+    medidores: list[dict[str, Any]] = []
+    for id_medidor, fecha_instalacion, fecha_retiro in filas:
+        if fecha_instalacion is None:
+            raise RuntimeError(
+                f"El medidor {id_medidor} no tiene fecha_instalacion"
+            )
+
+        medidores.append(
+            {
+                "id_medidor": int(id_medidor),
+                "fecha_instalacion": _convertir_fecha(
+                    fecha_instalacion, "fecha_instalacion"
+                ),
+                "fecha_retiro": (
+                    _convertir_fecha(fecha_retiro, "fecha_retiro")
+                    if fecha_retiro is not None
+                    else None
+                ),
+            }
+        )
+
+    return medidores
 
 
 def _contar_alertas(connection: Any) -> int:
@@ -202,10 +253,12 @@ def _prioridad(
     duracion_horas: float,
     kwh_desviados: float,
 ) -> int:
-    """Devuelve prioridad 1 (máxima) a 4 (baja)."""
+    """Devuelve prioridad 1 (maxima) a 4 (baja)."""
     efecto = tipo["efecto"]
 
-    if efecto == "INCREMENTO" and (kwh_desviados >= 100 or duracion_horas >= 24):
+    if efecto == "INCREMENTO" and (
+        kwh_desviados >= 100 or duracion_horas >= 24
+    ):
         return 1
     if efecto in {"CONGELAMIENTO", "NULIFICACION"}:
         return 2
@@ -286,8 +339,8 @@ def construir_alertas(
         str | None,
     ]
 ]:
-    """Construye alertas sin insertarlas todavía."""
-    del rules  # La detección base vive en energia.tipo_evento.
+    """Construye alertas respetando la vigencia de cada medidor."""
+    del rules
 
     generation = _seccion_generacion(config)
     alert_config = _config_alertas(config)
@@ -306,10 +359,8 @@ def construir_alertas(
 
     periodo_inicio = datetime.combine(fecha_inicio, time.min)
     periodo_fin_exclusivo = datetime.combine(
-        fecha_fin + timedelta(days=1),
-        time.min,
+        fecha_fin + timedelta(days=1), time.min
     )
-    meses_equivalentes = ((fecha_fin - fecha_inicio).days + 1) / 30.0
 
     semilla_base = int(generation.get("seed", generation.get("semilla", 42)))
     semilla = int(alert_config.get("seed", semilla_base + 5000))
@@ -344,15 +395,36 @@ def construir_alertas(
     if not medidores:
         raise RuntimeError("energia.medidor esta vacia.")
 
+    vigencia_por_medidor = {
+        medidor["id_medidor"]: medidor for medidor in medidores
+    }
+
     id_alerta = _siguiente_id(connection)
     alertas = []
 
-    # Alertas asociadas a eventos reales.
+    # Alertas asociadas a eventos reales. Un evento valido ya esta contenido
+    # en la vigencia de su medidor; se conserva una verificacion defensiva.
     for evento in eventos:
         tipo_real = tipos[evento["id_tipo_evento"]]
 
         if rng.random() > tipo_real["prob_deteccion"]:
             continue
+
+        medidor = vigencia_por_medidor.get(evento["id_medidor"])
+        if medidor is None:
+            raise RuntimeError(
+                f"El evento {evento['id_evento']} referencia un medidor inexistente"
+            )
+
+        instalacion = datetime.combine(
+            medidor["fecha_instalacion"], time.min
+        )
+        retiro = (
+            datetime.combine(medidor["fecha_retiro"], time.min)
+            if medidor["fecha_retiro"] is not None
+            else periodo_fin_exclusivo
+        )
+        fin_vigencia = min(periodo_fin_exclusivo, retiro)
 
         duracion_horas = (
             evento["ts_fin"] - evento["ts_inicio"]
@@ -363,23 +435,21 @@ def construir_alertas(
 
         if ts_generacion >= evento["ts_fin"]:
             ts_generacion = evento["ts_fin"] - timedelta(minutes=1)
+        if ts_generacion < instalacion:
+            ts_generacion = instalacion
         if ts_generacion < periodo_inicio:
             ts_generacion = periodo_inicio
-        if ts_generacion >= periodo_fin_exclusivo:
+        if ts_generacion >= fin_vigencia:
             continue
 
         tipo_percibido = evento["id_tipo_evento"]
         if rng.random() < misclassification_rate:
             tipo_percibido = _elegir_distinto(
-                ids_tipo,
-                evento["id_tipo_evento"],
-                rng,
+                ids_tipo, evento["id_tipo_evento"], rng
             )
 
         prioridad = _prioridad(
-            tipo_real,
-            duracion_horas,
-            evento["kwh_desviados"],
+            tipo_real, duracion_horas, evento["kwh_desviados"]
         )
 
         ts_cierre, resultado = _cerrar_alerta(
@@ -407,43 +477,66 @@ def construir_alertas(
         id_alerta += 1
 
     # Falsas alarmas sin evento real asociado.
-    media_falsos = len(medidores) * meses_equivalentes * false_positive_rate
-    cantidad_falsos = _poisson(media_falsos, rng)
-    horas_periodo = int(
-        (periodo_fin_exclusivo - periodo_inicio).total_seconds() // 3600
-    )
-
-    for _ in range(cantidad_falsos):
-        id_medidor = rng.choice(medidores)
-        id_tipo_evento = rng.choice(ids_tipo)
-        ts_generacion = periodo_inicio + timedelta(
-            hours=rng.randrange(max(1, horas_periodo))
+    # Se genera una Poisson por medidor usando solo sus meses de vigencia.
+    for medidor in medidores:
+        instalacion = datetime.combine(
+            medidor["fecha_instalacion"], time.min
         )
-        prioridad = rng.choices([2, 3, 4], weights=[0.10, 0.45, 0.45], k=1)[0]
-
-        ts_cierre, resultado = _cerrar_alerta(
-            ts_generacion,
-            periodo_fin_exclusivo,
-            prioridad,
-            open_probability,
-            inconclusive_probability,
-            True,
-            rng,
+        retiro = (
+            datetime.combine(medidor["fecha_retiro"], time.min)
+            if medidor["fecha_retiro"] is not None
+            else periodo_fin_exclusivo
         )
 
-        alertas.append(
-            (
-                id_alerta,
-                None,
-                id_medidor,
-                id_tipo_evento,
-                ts_generacion,
-                prioridad,
-                ts_cierre,
-                resultado,
+        vigencia_inicio = max(periodo_inicio, instalacion)
+        vigencia_fin_exclusivo = min(periodo_fin_exclusivo, retiro)
+
+        if vigencia_fin_exclusivo <= vigencia_inicio:
+            continue
+
+        dias_vigentes = (
+            vigencia_fin_exclusivo - vigencia_inicio
+        ).total_seconds() / 86400.0
+        meses_vigentes = dias_vigentes / 30.0
+        cantidad_falsos = _poisson(
+            false_positive_rate * meses_vigentes, rng
+        )
+
+        for _ in range(cantidad_falsos):
+            ts_generacion = _instante_aleatorio(
+                vigencia_inicio, vigencia_fin_exclusivo, rng
             )
-        )
-        id_alerta += 1
+            if ts_generacion is None:
+                continue
+
+            id_tipo_evento = rng.choice(ids_tipo)
+            prioridad = rng.choices(
+                [2, 3, 4], weights=[0.10, 0.45, 0.45], k=1
+            )[0]
+
+            ts_cierre, resultado = _cerrar_alerta(
+                ts_generacion,
+                periodo_fin_exclusivo,
+                prioridad,
+                open_probability,
+                inconclusive_probability,
+                True,
+                rng,
+            )
+
+            alertas.append(
+                (
+                    id_alerta,
+                    None,
+                    medidor["id_medidor"],
+                    id_tipo_evento,
+                    ts_generacion,
+                    prioridad,
+                    ts_cierre,
+                    resultado,
+                )
+            )
+            id_alerta += 1
 
     alertas.sort(key=lambda fila: (fila[4], fila[0]))
     return alertas
@@ -507,6 +600,9 @@ def generar_alertas(
         connection.rollback()
         raise
 
+    eventos_por_id = {
+        evento["id_evento"]: evento for evento in _cargar_eventos(connection)
+    }
     asociadas = sum(1 for alerta in alertas if alerta[1] is not None)
     falsas = len(alertas) - asociadas
     abiertas = sum(1 for alerta in alertas if alerta[6] is None)
@@ -514,11 +610,7 @@ def generar_alertas(
         1
         for alerta in alertas
         if alerta[1] is not None
-        and next(
-            evento["id_tipo_evento"]
-            for evento in _cargar_eventos(connection)
-            if evento["id_evento"] == alerta[1]
-        ) != alerta[3]
+        and eventos_por_id[alerta[1]]["id_tipo_evento"] != alerta[3]
     )
 
     print(f"[OK] Alertas generadas: {len(alertas):,}")
@@ -526,10 +618,15 @@ def generar_alertas(
     print(f"[OK] Falsos positivos: {falsas:,}")
     print(f"[OK] Alertas abiertas: {abiertas:,}")
     print(f"[OK] Clasificaciones incorrectas: {mal_clasificadas:,}")
+    print("[OK] Alertas dentro de la vigencia de cada medidor")
 
     return len(alertas)
 
 
 # Alias uniforme para main.py.
-def generar(connection: Any, config: dict[str, Any], rules: dict[str, Any]) -> int:
+def generar(
+    connection: Any,
+    config: dict[str, Any],
+    rules: dict[str, Any],
+) -> int:
     return generar_alertas(connection, config, rules)

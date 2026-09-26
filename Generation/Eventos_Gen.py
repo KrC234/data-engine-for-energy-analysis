@@ -1,11 +1,16 @@
 """Generador de eventos sintéticos de HyperDataSynthetic.
 
 Responsabilidad:
-- Lee medidores activos desde energia.medidor.
+- Lee medidores y sus vigencias desde energia.medidor.
 - Lee reglas de anomalías desde energia.tipo_evento.
-- Genera eventos reproducibles dentro del periodo configurado.
+- Genera eventos reproducibles dentro de la vigencia de cada medidor.
 - Evita traslapes de eventos para un mismo medidor.
 - Inserta los eventos en energia.evento.
+
+Convención temporal:
+- fecha_instalacion es inclusiva.
+- fecha_retiro es exclusiva.
+- Un evento cumple: instalacion <= ts_inicio < ts_fin <= retiro.
 
 Notas:
 - No modifica la estructura de PostgreSQL.
@@ -86,8 +91,10 @@ def _traslapa(
     fin: datetime,
     intervalos: list[tuple[datetime, datetime]],
 ) -> bool:
-    return any(inicio < existente_fin and fin > existente_inicio
-               for existente_inicio, existente_fin in intervalos)
+    return any(
+        inicio < existente_fin and fin > existente_inicio
+        for existente_inicio, existente_fin in intervalos
+    )
 
 
 def _elegir_intervalo(
@@ -98,7 +105,7 @@ def _elegir_intervalo(
     rng: random.Random,
     intentos_maximos: int,
 ) -> tuple[datetime, datetime] | None:
-    """Busca un intervalo horario válido y sin traslapes."""
+    """Busca un intervalo horario válido, completo y sin traslapes."""
     duracion = timedelta(hours=duracion_horas)
     ultimo_inicio = periodo_fin_exclusivo - duracion
 
@@ -114,7 +121,9 @@ def _elegir_intervalo(
         inicio = periodo_inicio + timedelta(hours=desplazamiento)
         fin = inicio + duracion
 
-        if not _traslapa(inicio, fin, intervalos_ocupados):
+        if fin <= periodo_fin_exclusivo and not _traslapa(
+            inicio, fin, intervalos_ocupados
+        ):
             return inicio, fin
 
     return None
@@ -125,16 +134,43 @@ def _elegir_intervalo(
 # ======================================================================
 
 
-def _cargar_medidores(connection: Any) -> list[int]:
+def _cargar_medidores(connection: Any) -> list[dict[str, Any]]:
+    """Carga cada medidor junto con su intervalo de vigencia."""
     sql = """
-        SELECT id_medidor
+        SELECT
+            id_medidor,
+            fecha_instalacion,
+            fecha_retiro
         FROM energia.medidor
         ORDER BY id_medidor
     """
 
     with connection.cursor() as cursor:
         cursor.execute(sql)
-        return [fila[0] for fila in cursor.fetchall()]
+        filas = cursor.fetchall()
+
+    medidores: list[dict[str, Any]] = []
+    for id_medidor, fecha_instalacion, fecha_retiro in filas:
+        if fecha_instalacion is None:
+            raise RuntimeError(
+                f"El medidor {id_medidor} no tiene fecha_instalacion"
+            )
+
+        medidores.append(
+            {
+                "id_medidor": int(id_medidor),
+                "fecha_instalacion": _convertir_fecha(
+                    fecha_instalacion, "fecha_instalacion"
+                ),
+                "fecha_retiro": (
+                    _convertir_fecha(fecha_retiro, "fecha_retiro")
+                    if fecha_retiro is not None
+                    else None
+                ),
+            }
+        )
+
+    return medidores
 
 
 def _cargar_tipos_evento(connection: Any) -> list[dict[str, Any]]:
@@ -202,8 +238,8 @@ def construir_eventos(
     config: dict[str, Any],
     rules: dict[str, Any],
 ) -> list[tuple[int, int, int, datetime, datetime, float | None, float]]:
-    """Construye eventos en memoria sin insertarlos todavía."""
-    del rules  # Las reglas específicas ya viven en energia.tipo_evento.
+    """Construye eventos dentro de la vigencia real de cada medidor."""
+    del rules
 
     generation = _seccion_generacion(config)
     events_config = _config_eventos(config)
@@ -220,20 +256,18 @@ def construir_eventos(
     if fecha_fin < fecha_inicio:
         raise ValueError("La fecha final no puede ser anterior a la fecha inicial")
 
-    periodo_inicio = datetime.combine(fecha_inicio, time.min)
-    periodo_fin_exclusivo = datetime.combine(
-        fecha_fin + timedelta(days=1),
-        time.min,
+    corrida_inicio = datetime.combine(fecha_inicio, time.min)
+    corrida_fin_exclusivo = datetime.combine(
+        fecha_fin + timedelta(days=1), time.min
     )
-
-    dias = (fecha_fin - fecha_inicio).days + 1
-    meses_equivalentes = dias / 30.0
 
     semilla_base = int(generation.get("seed", generation.get("semilla", 42)))
     semilla_eventos = int(events_config.get("seed", semilla_base + 3000))
     rng = random.Random(semilla_eventos)
 
     intentos_maximos = int(events_config.get("max_placement_attempts", 100))
+    if intentos_maximos <= 0:
+        raise ValueError("events.max_placement_attempts debe ser mayor que cero")
 
     medidores = _cargar_medidores(connection)
     tipos_evento = _cargar_tipos_evento(connection)
@@ -251,20 +285,40 @@ def construir_eventos(
     id_evento = _siguiente_id(connection)
     eventos = []
     ocupados: dict[int, list[tuple[datetime, datetime]]] = {
-        id_medidor: [] for id_medidor in medidores
+        medidor["id_medidor"]: [] for medidor in medidores
     }
 
-    # Por cada combinación medidor/tipo se obtiene una cantidad Poisson
-    # cuya media es tasa mensual × duración equivalente del periodo.
-    for id_medidor in medidores:
+    for medidor in medidores:
+        id_medidor = medidor["id_medidor"]
+
+        instalacion = datetime.combine(
+            medidor["fecha_instalacion"], time.min
+        )
+        retiro = (
+            datetime.combine(medidor["fecha_retiro"], time.min)
+            if medidor["fecha_retiro"] is not None
+            else corrida_fin_exclusivo
+        )
+
+        # Intersección entre la corrida y la vigencia del medidor.
+        periodo_inicio = max(corrida_inicio, instalacion)
+        periodo_fin_exclusivo = min(corrida_fin_exclusivo, retiro)
+
+        if periodo_fin_exclusivo <= periodo_inicio:
+            continue
+
+        dias_vigentes = (
+            periodo_fin_exclusivo - periodo_inicio
+        ).total_seconds() / 86400.0
+        meses_equivalentes = dias_vigentes / 30.0
+
         for tipo in tipos_evento:
             media = tipo["tasa_por_medidor_mes"] * meses_equivalentes
             cantidad = _poisson(media, rng)
 
             for _ in range(cantidad):
                 duracion = rng.randint(
-                    tipo["duracion_min_h"],
-                    tipo["duracion_max_h"],
+                    tipo["duracion_min_h"], tipo["duracion_max_h"]
                 )
 
                 intervalo = _elegir_intervalo(
@@ -375,6 +429,7 @@ def generar_eventos(
 
     print(f"[OK] Eventos generados: {len(eventos):,}")
     print(f"[OK] Medidores evaluados: {len(_cargar_medidores(connection)):,}")
+    print("[OK] Eventos dentro de la vigencia de cada medidor")
     print("[OK] Eventos sin traslapes por medidor")
     print("[OK] kwh_desviados inicia en 0 y se calcula con las lecturas")
 
@@ -382,5 +437,9 @@ def generar_eventos(
 
 
 # Alias uniforme para main.py.
-def generar(connection: Any, config: dict[str, Any], rules: dict[str, Any]) -> int:
+def generar(
+    connection: Any,
+    config: dict[str, Any],
+    rules: dict[str, Any],
+) -> int:
     return generar_eventos(connection, config, rules)
